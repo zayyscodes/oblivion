@@ -1,0 +1,270 @@
+body {
+  margin: 0;
+  margin-top: 0;
+  background: linear-gradient(
+    180deg,
+    rgb(240, 210, 140),
+    rgb(242, 190, 95),
+    rgb(127, 217, 207),
+    rgb(6, 189, 167)
+  );
+  height: 100%;
+}
+
+.header {
+    width: 99.60vw;
+    margin-top: -10%;
+}
+
+.oneliner-header {
+  font-family: "Press Start 2P", sans-serif;
+  font-weight: bold;
+  color: rgb(245, 239, 187);
+  position: absolute;
+  top: 70%; /* Adjusted for better positioning */
+  left: 50%;
+  margin-top: 2%;
+  margin-bottom: -30%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(10px, 2vw, 30px);
+  text-align: center;
+  text-shadow: 4px 4px 2px rgb(0, 0, 0);
+  overflow: hidden;
+  white-space: nowrap;
+  width: 90vw;
+  max-width: 100%;
+  animation: typing_1 4s steps(50, end) forwards;
+}
+
+
+/* Apply to the whole page */
+body {
+  scrollbar-width: thin; /* For Firefox */
+  scrollbar-color: rgb(178, 0, 53) rgb(255, 255, 255); /* Red scrollbar, dark background */
+}
+
+/* For Chrome, Edge, and Safari */
+::-webkit-scrollbar {
+  width: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(255, 255, 255); /* Dark track background */
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(178, 0, 53); /* Deep red scrollbar */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(178, 0, 53); /* Slightly brighter red on hover */
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -70%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@keyframes typing_1 {
+  from {
+    width: 0;
+  }
+  to {
+    width: 90vw;
+  }
+}
+
+@keyframes typing_2 {
+  from {
+    width: 0;
+  }
+  to {
+    width: 65vw;
+  }
+}
+
+@keyframes blink {
+  50% {
+    border-color: transparent;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.body-container {
+  display: grid;
+  grid-template-columns: 1fr; /* Default: single column */
+  gap: 5px;
+  animation: fade 1s;
+}
+
+.rules-heading {
+  font-family: "Road Rage";
+  color: rgb(251, 238, 209);
+  text-align: center;
+  text-shadow: 1px 1px 4px rgb(178, 117, 3);
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: clamp(30px, 12vw, 120px);
+}
+
+.about-heading {
+  font-family: "Road Rage";
+  color: rgb(251, 238, 209);
+  text-align: center;
+  text-shadow: 1px 1px 4px rgb(178, 117, 3);
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: clamp(30px, 12vw, 120px);
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  color: white;
+  border-style: dotted;
+  border-radius: 10px;
+  margin: 0 10% 5% 10%;
+  background-color: rgba(127, 217, 207, 0.65);
+  font-size: 2.5vw;
+  text-align: center;
+  z-index: 0;
+}
+
+.game-heading {
+  font-weight: bold;
+  font-family: "VT323";
+  color: rgb(245, 239, 187);
+  text-shadow: 3px 3px 1px black;
+  font-size: clamp(12px, 4vw, 30px);
+}
+
+.oneliner {
+  list-style: none;
+  padding: 0;
+  font-size: clamp(12px, 3vw, 15px);
+  text-shadow: 0px 0px 6px rgb(10, 183, 163);
+}
+
+.description-container {
+  display: grid;
+  grid-template-columns: 90% 5%;
+  column-gap: 5px;
+  position: relative;
+  place-items: center;
+  padding: 4px;
+  color: white;
+  border-style: dotted;
+  border-radius: 10px;
+  margin: 0 10%;
+  background-color: rgba(224, 111, 4, 0.65);
+  text-align: center;
+  margin-bottom: 5%;
+  z-index: 0;
+  overflow: hidden; /* Prevents content from spilling out */
+}
+
+.description-text {
+  position: relative;
+  font-family: "Montserrat";
+  color: white;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: clamp(12px, 3vw, 15px);
+  text-align: center;
+  text-shadow: 0px 0px 6px rgb(218, 120, 7);
+  max-width: 90%; /* Ensures text remains within the box */
+}
+
+.button {
+  margin-left: 30%;
+  padding: 15px 20px;
+  width: 250px;
+  font-family: "Press Start 2P", cursive;
+  color: rgb(245, 239, 187);
+  background-color: rgb(6, 189, 167);
+  font-size: clamp(25px, 3vw, 30px);
+  border: dashed 3px rgb(169, 246, 253);
+}
+
+.button:hover{
+  box-shadow: 0px 0px 10px rgb(0, 156, 137);
+  border: dashed 3px rgb(8, 85, 92);
+  text-shadow: 0px 0px 10px rgb(0, 0, 0);
+}
+
+@media (min-width: 1024px) {
+  body {
+    background: linear-gradient(
+      90deg,
+      rgb(240, 210, 140),
+      rgb(242, 190, 95),
+      rgb(127, 217, 207),
+      rgb(6, 189, 167)
+    );
+  }
+
+  .header{
+    width: 99.75vw;
+  }
+  .body-container {
+    grid-template-columns: 1fr 1fr;
+    place-content: center;
+    align-items: start;
+    column-gap: 60px;
+    margin: 0 10px;
+  }
+
+  .rules-heading{
+    text-shadow: 1px 1px 4px rgb(3, 178, 158);
+  }
+
+  .button{
+    border: dashed 3px rgb(247, 207, 169);
+  background-color: rgb(220, 109, 6);
+  }
+
+  .button:hover{
+    box-shadow: 0px 0px 10px rgb(220, 109, 6);
+    border: dashed 3px rgb(213, 68, 0);
+    text-shadow: 0px 0px 10px rgb(0, 0, 0);
+  }
+}
