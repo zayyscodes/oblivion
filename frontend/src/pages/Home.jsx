@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../pages/styles.css";
 import header from "../assets/header.jpg";
 import { Link } from "react-router-dom";
+import Creators from "../components/Creators";
 
 function Home() {
   const [showLiner, setShowLiner] = useState(false);
@@ -192,6 +193,8 @@ function Home() {
                 </section>
               )}
           </main>
+
+          <Creators/>
         </>
       )}
     </div>

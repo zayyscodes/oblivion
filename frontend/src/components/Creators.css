@@ -1,0 +1,87 @@
+.meet-button {
+    width: 50%;
+    max-width: 620px;
+    margin-top: 5%;
+    margin-left: 26%;
+    text-align: center;
+    padding: 15px 10px;
+    font-family: "Press Start 2P";
+    font-weight: lighter;
+    color: white;
+    text-shadow: 0 0 3px rgb(170, 202, 224);
+    font-size: 2.4vw;
+    background-color: rgb(12, 37, 82);
+    border: none;
+    border-radius: 10px;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    z-index: 1;
+    white-space: nowrap;
+  }
+  
+  .meet-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    place-items: center;
+    align-items: center;
+    padding: 20px 15px 15px 20px;
+    font-family: "P2P";
+    font-weight: lighter;
+    color: white;
+    column-gap: 2%;
+    border: dashed 2px rgb(60, 101, 142);
+    border-radius: 10px;
+    margin: 20px 6% 0 6%;
+    background-color: rgba(5, 34, 63, 0.25);
+    font-size: 2.5vw;
+    text-align: center;
+    margin-bottom: 5%;
+    z-index: 0;
+  }
+  
+  .creator-card {
+    text-align: center;
+  }
+  
+  .creator-img {
+    width: 80%;
+    max-width: 200px;
+    border-radius: 30px;
+    border-style: ridge;
+    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+    padding: 0;
+    margin-bottom: 5%;
+  }
+  
+  .creator-name {
+    font-family: "Press Start 2P";
+    margin: 2%;
+    font-size: clamp(12px, 2.5vw, 29px);
+    text-shadow: 1px 1px 10px rgba(226, 71, 205, 0.5);
+    color: rgb(18, 19, 66);
+  }
+  
+  .creator-role {
+    margin-top: 5%;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
+    font-family: "Inter";
+    font-size: clamp(12px, 2.4vw, 25px);
+    font-weight: bold;
+  }
+  
+  .creator-link {
+    margin-top: 5%;
+    font-family: "Inter";
+    font-size: clamp(10px, 2.3vw, 20px);
+    font-weight: bold;
+    color: rgb(10, 37, 63);
+    text-decoration: none;
+  }
+
+  @media (min-width: 1024px){
+    .meet-container{
+        margin: 20px 15% 0 15%;
+        background-color: rgba(146, 195, 202, 0.8);
+    }
+  }
+  
