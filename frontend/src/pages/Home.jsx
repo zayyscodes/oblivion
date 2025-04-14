@@ -34,6 +34,7 @@ function Home() {
 
   return (
     <div
+      className="homepage"
       style={{ paddingBottom: "100px", overflow: "hidden", minHeight: "84vh" }}
     >
       <section
@@ -53,7 +54,7 @@ function Home() {
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            fontSize: "clamp(60px, 12vw, 200px)", // Scales dynamically
+            fontSize: "clamp(60px, 15vw, 220px)", // Scales dynamically
             textAlign: "center",
             textShadow: "3px 3px 1px rgb(0, 0, 0)",
             animation: "fadeIn 2s ease-in-out",
@@ -76,6 +77,18 @@ function Home() {
       {showText && (
         <>
           <main className="body-container">
+          {!isFullScreen && (
+                <section
+                style={{
+                  animation: "fade 1s",
+                }}
+              >
+                <div className="note">
+                  <strong>NOTE:</strong> To ensure better experience, you are ADVISED to play in FULL SCREEN MODE
+                </div>
+
+                </section>
+              )}
             <section
               style={{
                 animation: "fade 1s",
@@ -104,7 +117,7 @@ function Home() {
 
               {isFullScreen && (
                 <div>
-                  <Link to="/startgame">
+                  <Link to="/gamestory">
                   <button className="button">
                     START GAME
                   </button>
@@ -185,7 +198,7 @@ function Home() {
 
             {!isFullScreen && (
                 <section>
-                  <Link to="/startgame">
+                  <Link to="/gamestory">
                   <button className="button">
                     START GAME
                   </button>

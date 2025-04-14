@@ -1,10 +1,11 @@
-body {
+.homepage {
   margin: 0;
   margin-top: 0;
   background: linear-gradient(
     180deg,
     rgb(240, 210, 140),
     rgb(242, 190, 95),
+    rgb(247, 232, 195),
     rgb(127, 217, 207),
     rgb(6, 189, 167)
   );
@@ -12,23 +13,24 @@ body {
 }
 
 .header {
-    width: 99.60vw;
-    margin-top: -10%;
+    width: 100%;
+    margin-top: 0;
+    overflow-y: hidden;
 }
 
 .oneliner-header {
-  font-family: "Press Start 2P", sans-serif;
-  font-weight: bold;
-  color: rgb(245, 239, 187);
+  font-family: "Road Rage";
+  font-weight: bolder;
+  color: rgb(226, 220, 202);
   position: absolute;
-  top: 70%; /* Adjusted for better positioning */
+  top: 65%; /* Adjusted for better positioning */
   left: 50%;
   margin-top: 2%;
   margin-bottom: -30%;
   transform: translate(-50%, -50%);
-  font-size: clamp(10px, 2vw, 30px);
+  font-size: clamp(10px, 8vw, 50px);
   text-align: center;
-  text-shadow: 4px 4px 2px rgb(0, 0, 0);
+  text-shadow: 1px 1px 10px rgb(0, 0, 0);
   overflow: hidden;
   white-space: nowrap;
   width: 90vw;
@@ -93,6 +95,15 @@ body {
   }
 }
 
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes typing_1 {
   from {
     width: 0;
@@ -131,6 +142,23 @@ body {
   grid-template-columns: 1fr; /* Default: single column */
   gap: 5px;
   animation: fade 1s;
+}
+
+.note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  color: blanchedalmond;
+  border-style: dotted;
+  border-radius: 10px;
+  margin: 20px 10% 5% 10%;
+  background-color: rgba(255, 38, 0, 0.618);
+  font-size: 2.5vw;
+  text-align: center;
+  z-index: 0;
+  font-family: "Press Start 2P";
 }
 
 .rules-heading {
@@ -215,7 +243,7 @@ body {
 }
 
 .button {
-  margin-left: 35%;
+  margin-left: 33%;
   padding: 15px 20px;
   width: 250px;
   font-family: "Press Start 2P", cursive;
@@ -232,18 +260,19 @@ body {
 }
 
 @media (min-width: 1024px) {
-  body {
+  .homepage {
     background: linear-gradient(
       90deg,
       rgb(240, 210, 140),
       rgb(242, 190, 95),
+      rgb(247, 232, 195),
       rgb(127, 217, 207),
       rgb(6, 189, 167)
     );
   }
 
   .header{
-    width: 99.75vw;
+    width: 100%;
   }
   .body-container {
     grid-template-columns: 1fr 1fr;
@@ -260,11 +289,17 @@ body {
   .button{
     border: dashed 3px rgb(247, 207, 169);
   background-color: rgb(220, 109, 6);
+  margin-left: 33%;
+
   }
 
   .button:hover{
     box-shadow: 0px 0px 10px rgb(220, 109, 6);
     border: dashed 3px rgb(213, 68, 0);
     text-shadow: 0px 0px 10px rgb(0, 0, 0);
+  }
+
+  .oneliner-header {
+    font-size: clamp(10px, 8vw, 70px);
   }
 }

@@ -8,5 +8,5 @@ export default defineConfig({
   ],
   
   envPrefix: "VITE_", 
-  assetsInclude: ['**/*.JPG', '**/*.jpg', '**/*.PNG', '**/*.png']
+  assetsInclude: ['**/*.JPG', '**/*.jpg', '**/*.JPEG', '**/*.PNG', '**/*.png']
 })

@@ -6,9 +6,9 @@
     text-align: center;
     padding: 15px 10px;
     font-family: "Press Start 2P";
-    font-weight: lighter;
+    font-weight: bold;
     color: white;
-    text-shadow: 0 0 3px rgb(170, 202, 224);
+    text-shadow: 2px 2px 1px rgb(12, 90, 142);
     font-size: 2.4vw;
     background-color: rgb(12, 37, 82);
     border: none;
@@ -56,23 +56,24 @@
   .creator-name {
     font-family: "Press Start 2P";
     margin: 2%;
-    font-size: clamp(12px, 2.5vw, 29px);
+    font-size: clamp(12px, 2.4vw, 25px);
     text-shadow: 1px 1px 10px rgba(226, 71, 205, 0.5);
     color: rgb(18, 19, 66);
   }
   
   .creator-role {
+    margin: 0;
     margin-top: 5%;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
     font-family: "Inter";
-    font-size: clamp(12px, 2.4vw, 25px);
+    font-size: clamp(12px, 2.4vw, 21px);
     font-weight: bold;
   }
   
   .creator-link {
     margin-top: 5%;
     font-family: "Inter";
-    font-size: clamp(10px, 2.3vw, 20px);
+    font-size: clamp(10px, 2.3vw, 16px);
     font-weight: bold;
     color: rgb(10, 37, 63);
     text-decoration: none;
