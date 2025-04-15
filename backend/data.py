@@ -1,28 +1,25 @@
+import random
+
 suspects = {
     'Chris Blaine': {
-        'age': '28',
-        'height': '6 feet 3 inches',
-        'hair_color': 'black',
-        'eye_color': 'blue',
-        'occupation': 'ceo',
-        'motive': 'Financial Loss'
+        'age': '28', 'height': '6 feet 3 inches', 'hair_color': 'black', 'eye_color': 'blue',
+        'occupation': 'ceo', 'motive': 'Financial Loss', 'location': 'office',
+        'knows_victim': True, 'lie_probability': 0.2, 'probability': 0.2
     },
-    'Jason Blue': {
-        'age': '31',
-        'height': '5 feet 11 inches',
-        'hair_color': 'brown',
-        'eye_color': 'blue',
-        'occupation': 'singer',
-        'motive': 'Romantic Fallout / Rejection'
+   'Jason Blue': {
+        'age': '31', 'height': '5 feet 11 inches', 'hair_color': 'brown', 'eye_color': 'blue',
+        'occupation': 'singer', 'motive': 'Romantic Fallout / Rejection', 'location': 'home',
+        'knows_victim': False, 'lie_probability': 0.3, 'probability': 0.2
     },
+
     'Kate Ivory': {
         'age': '35',
         'height': '5 feet 8 inches',
         'hair_color': 'black',
         'eye_color': 'brown',
         'occupation': 'banker',
-        'motive': 'Revenge / Financial Disputes',
-        'additional_info': ['beard', 'moustache']
+        'motive': 'Revenge / Financial Disputes', 'location': 'studio',
+        'knows_victim': True, 'lie_probability': 0.25, 'probability': 0.2
     },
     'Poppy Green': {
         'age': '26',
@@ -30,15 +27,17 @@ suspects = {
         'hair_color': 'brown',
         'eye_color': 'green',
         'occupation': 'model',
-        'motive': 'Jealousy / Career Ambition'
+        'motive': 'Jealousy / Career Ambition','location': 'flower shop',
+        'knows_victim': True, 'lie_probability': 0.45, 'probability': 0.2
     },
     'Violet Riley': {
         'age': '27',
         'height': '5 feet 9 inches',
         'hair_color': 'blonde',
         'eye_color': 'brown',
-        'occupation': 'teacher',
-        'motive': 'Hidden Past / Buried Secrets'
+        'occupation': 'florist',
+        'motive': 'Hidden Past / Buried Secrets', 'location': 'gallery',
+        'knows_victim': True, 'lie_probability': 0.1, 'probability': 0.2
     },
     'Zehab Rose': {
         'age': '22',
@@ -46,7 +45,8 @@ suspects = {
         'hair_color': 'brown',
         'eye_color': 'brown',
         'occupation': 'writer',
-        'motive': 'Inheritance Dispute / Family Resentment'
+        'motive': 'Inheritance Dispute / Family Resentment','location': 'library',
+        'knows_victim': True, 'lie_probability': 0.5, 'probability':0.4
     }
 }
 
@@ -110,9 +110,10 @@ def get_weapon_clues(weapon_type):
     weapon_clue_map = {
         'Wrench': "A heavy metallic object left a dent on the wall.",
         'Rope': "Rope fibers were found on the victim's wrist.",
-        'Revlover': "Gunpowder residue was detected in the air.",
+        'Revolver': "Gunpowder residue was detected in the air.",
         'Lead Pipe': "Blunt force trauma marks match a cylindrical shape.",
         'Knife': "A clean, deep cut suggests a sharp blade was used.",
         'Candlestick': "Wax droplets were found near the impact site."
     }
     return [weapon_clue_map.get(weapon_type, "No specific clues found for this weapon.")]
+
