@@ -48,7 +48,6 @@ suspects[killer_name]['probability'] = 0.5
 MAX_GAME_DURATION = 300
 game_start_time = time.time()  
 
-
 def check_time():
     elapsed = time.time() - game_start_time
     if elapsed > MAX_GAME_DURATION:
@@ -59,17 +58,30 @@ def check_time():
 
 fake_locations = {}
 lie_counter = {name: 0 for name in suspects}
+liars = []
 
 for name, data in suspects.items():
+    original_location = data['location']
+    possible_locations = [s['location'] for s in suspects.values() if s['location'] != original_location]
+    
+    # Killer always lies
     if name == killer_name:
-        original_location = data['location']
-        possible_locations = [s['location'] for s in suspects.values() if s['location'] != original_location]
-        fake_location = random.choice(possible_locations)
-        fake_locations[name] = fake_location
-    elif random.random() < data['lie_probability']:
-        original_location = data['location']
-        possible_locations = [s['location'] for s in suspects.values() if s['location'] != original_location]
         fake_locations[name] = random.choice(possible_locations)
+        liars.append(name)
+    
+    # Others lie based on their lie_probability
+    elif random.random() < data['lie_probability']:
+        fake_locations[name] = random.choice(possible_locations)
+    
+    else:
+        # Tells the truth
+        fake_locations[name] = original_location
+    
+    if not liars:
+        non_killers = [s for s in suspects if s != killer_name]
+        forced_liar = random.choice(non_killers)
+        liars.append(forced_liar)
+
 
 # --- Reinforcement Learning Setup ---
 # Learning Rate and Discount Factor for RL
@@ -97,7 +109,6 @@ for name, data in suspects.items():
     print(f"Claimed Location at time of murder: {location_to_show}")
     suspect_statements[name] = location_to_show
 
-# --- Round 2: Alibi Claims ---
 # --- Round 2: Suspicion & Alibis ---
 print("\nRound 2: Suspects give statements about others...")
 
@@ -108,49 +119,69 @@ for name in suspects:
     print(f"\n{name} was asked who they saw:")
     alibi_claims[name] = {}
     for target in seen:
-        if random.random() > suspects[name]['lie_probability']:
-            actual_location = fake_locations.get(target, suspects[target]['location'])
-            alibi_claims[name][target] = actual_location
-            print(f"  → {target} was at {actual_location}")
-        else:
-            other_actual = fake_locations.get(target, suspects[target]['location'])
-            possible_locations = [s['location'] for s in suspects.values() if s['location'] != other_actual]
+        # Increase realism: both killers and non-killers can lie
+        actual_location = suspects[target]['location']
+        
+        # Non-killers lie based on their lie_probability (adds unpredictability)
+        if name == killer_name or random.random() < suspects[name]['lie_probability']:
+            possible_locations = [s['location'] for s in suspects.values() if s['location'] != actual_location]
             fake_location = random.choice(possible_locations)
             alibi_claims[name][target] = fake_location
             print(f"  → {target} was at {fake_location}")
+        else:
+            alibi_claims[name][target] = actual_location
+            print(f"  → {target} was at {actual_location}")
 
 # --- Round 3: CCTV Verification with AI Suggestion and Self-Alibi Check ---
 print("\nRound 3: Verify suspect alibis with CCTV...")
 
-# Determine most suspected person
-most_suspected = max(suspects.items(), key=lambda x: x[1]['probability'])[0]
+# Determine most suspected person, excluding the killer
+most_suspected = max(
+    [(name, data) for name, data in suspects.items()],
+    key=lambda x: x[1]['probability']
+)[0]
+
 print(f"\n🤖 AI Suggestion: Based on current evidence, we recommend verifying {most_suspected}'s alibi first.")
 
 checked = set()
-max_checks = 3
 
-while max_checks > 0:
+while True:  # Keep checking until user decides to proceed
+    print("\n📊 Current Probabilities (Sorted):")
+    for s, p in sorted(suspects.items(), key=lambda x: x[1]['probability'], reverse=True):
+        print(f"{s}: {round(p['probability'], 2)}")
+
     print("\nWould you like to:")
     print(f"1️⃣ Check {most_suspected}'s alibi")
     print("2️⃣ Choose someone else to verify")
-    choice_input = input("Your choice (1 or 2): ").strip()
+    print("3️⃣ Move to Final Deduction")
+
+    choice_input = input("Your choice (1, 2, or 3): ").strip()
 
     if choice_input == '1':
         choice = most_suspected
-    else:
-        available = [s for s in suspects if s not in checked]
+    elif choice_input == '2':
+        available = [s for s in suspects if s != killer_name and s not in checked]
         print("\nRemaining suspects to check:", ", ".join(available))
         choice = input("Pick a suspect to verify: ").strip().title()
+    elif choice_input == '3':
+        break
+    else:
+        print("❌ Invalid choice. Please try again.")
+        continue
 
     if choice not in suspects or choice in checked:
         print("❌ Invalid choice or already verified.")
         continue
 
     checked.add(choice)
-    actual_location = fake_locations.get(choice, suspects[choice]['location'])
-    claimed_location = suspect_statements[choice]
+    actual_location = suspects[choice]['location']
+    claimed_location = fake_locations[choice]
 
     print(f"\n→ CCTV CHECK: {choice} claimed to be at {claimed_location}")
+    
+    # Killer's alibi is always false
+    #if choice == killer_name:
+     #   print(f"❌ CCTV disproves {killer_name}'s alibi. The killer is always lying.")
     if claimed_location == actual_location:
         print(f"✅ CCTV confirms {choice}'s self-claimed location.")
     else:
@@ -170,21 +201,6 @@ while max_checks > 0:
                 lie_counter[accuser] += 1
                 penalty = 0.05 + (lie_counter[accuser] * 0.02)
                 rl_update(suspects[accuser], -penalty)
-
-    max_checks -= 1
-
-    if max_checks == 0:
-        break
-
-    print("\nDo you want to:")
-    print("1️⃣ Check another suspect’s alibi")
-    print("2️⃣ Proceed to final deduction")
-    next_action = input("Your choice (1 or 2): ").strip()
-
-    if next_action == '2':
-        break
-    elif next_action != '1':
-        print("❌ Invalid input. Continuing by default...")
 
 # --- Motive + Opportunity Boost ---
 crime_scene = suspects[killer_name]['location']
@@ -206,6 +222,7 @@ for s, p in sorted(suspects.items(), key=lambda x: x[1]['probability'], reverse=
     print(f"{s}: {round(p['probability'], 2)}")
 
 # --- Final Guesses and Dynamic Updates ---
+print(f" - Weapon Clue: {random.choice(get_weapon_clues(killer_weapon))}")
 tries = 3
 while tries > 0:
     guess_killer = input("\nWho do you think the killer is? ").lower()
