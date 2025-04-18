@@ -108,12 +108,12 @@ def get_suspect_clues(suspect_data):
 
 def get_weapon_clues(weapon_type):
     weapon_clue_map = {
-        'Wrench': "A heavy metallic object left a dent on the wall.",
-        'Rope': "Rope fibers were found on the victim's wrist.",
-        'Revolver': "Gunpowder residue was detected in the air.",
-        'Lead Pipe': "Blunt force trauma marks match a cylindrical shape.",
-        'Knife': "A clean, deep cut suggests a sharp blade was used.",
-        'Candlestick': "Wax droplets were found near the impact site."
-    }
-    return [weapon_clue_map.get(weapon_type, "No specific clues found for this weapon.")]
+    'Wrench': "A peculiar dent in the wall hints at a forceful impact with something solid.",
+    'Rope': "Faint abrasions around the neck suggest some form of restraint.",
+    'Revolver': "There was a lingering scent and haze in the room, difficult to place.",
+    'Lead Pipe': "The pattern of bruising implies something long and weighty was involved.",
+    'Knife': "The wound appeared precise, almost surgical in nature.",
+    'Candlestick': "Soft wax traces and scattered soot hinted at a source of dim light nearby."
+}
 
+    return [weapon_clue_map.get(weapon_type, "No specific clues found for this weapon.")]
