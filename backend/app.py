@@ -13,38 +13,55 @@ def add_user():
 
 @app.route('/submit_score', methods=['POST'])
 def submit_score():
-    # Check that the incoming data is JSON and parse it
-    data = request.json  # Expecting {"username": "Fizza", "score": 90}
-    
-    # Check if the expected keys are in the request
-    if not data or 'username' not in data or 'score' not in data:
-        return jsonify({"error": "Invalid data. 'username' and 'score' are required."}), 400
-    
-    # Find the existing user
+    data = request.json
+
+    # Validate keys
+    if not data or 'username' not in data or 'time' not in data or 'tries' not in data:
+        return jsonify({"error": "Invalid data. 'username', 'time', and 'tries' are required."}), 400
+
+    # Extract time string like "0 minutes and 34 seconds"
+    time_string = data["time"]
+
+    # Parse time into total seconds using regex
+    match = re.match(r"(?:(\d+)\s*minutes?)?\s*(?:and\s*)?(?:(\d+)\s*seconds?)?", time_string)
+    if not match:
+        return jsonify({"error": "Invalid time format."}), 400
+
+    minutes = int(match.group(1)) if match.group(1) else 0
+    seconds = int(match.group(2)) if match.group(2) else 0
+    total_seconds = minutes * 60 + seconds
+
+    # Calculate score
+    score = 1000 - total_seconds - (50 * data["tries"])
+
+    # Check if user exists
     existing_user = mongo.db.users.find_one({"username": data["username"]})
 
     if existing_user:
-        # If the user exists but doesn't have a score, assign the new score
         if "score" not in existing_user:
             mongo.db.users.update_one(
                 {"username": data["username"]},
-                {"$set": {"score": data["score"]}}
+                {"$set": {"score": score}}
             )
-            return jsonify(message="Score assigned to new user!"), 200
-        
-        # Only update the score if the new score is higher than the old one
-        if data["score"] > existing_user["score"]:
+            return jsonify(message="Score assigned to existing user!"), 200
+
+        if score > existing_user["score"]:
             mongo.db.users.update_one(
                 {"username": data["username"]},
-                {"$set": {"score": data["score"]}}
+                {"$set": {"score": score}}
             )
             return jsonify(message="High score updated!"), 200
         else:
             return jsonify(message="Score not high enough to update."), 200
     else:
-        # New user, insert with their score
-        mongo.db.users.insert_one(data)
+        # Save new user
+        new_user = {
+            "username": data["username"],
+            "score": score
+        }
+        mongo.db.users.insert_one(new_user)
         return jsonify(message="Score saved successfully!"), 201
+    
 
 @app.route('/leaderboard', methods=['GET'])
 def leaderboard():
