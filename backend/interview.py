@@ -208,14 +208,55 @@ for name, data in suspects.items():
     boost = evaluate_motive_opportunity(name, killer_weapon, crime_scene, fake_locations)
     suspects[name]['probability'] = min(1, suspects[name]['probability'] + boost)
 
+# --- CSP: Constraint Satisfaction Problem ---
+def is_consistent(suspect_name):
+    """
+    Returns True if suspect satisfies all constraints: motive, opportunity, and consistent alibi.
+    """
+    suspect = suspects[suspect_name]
+    
+    # Constraint 1: Motive should be strong
+    if suspect['motive'].lower() not in ['revenge', 'jealousy', 'inheritance']:
+        return False
+
+    # Constraint 2: Was (or claims to be) near the murder room
+    actual_or_fake_location = fake_locations.get(suspect_name, suspect['location'])
+    if actual_or_fake_location != crime_scene:
+        return False
+
+    # Constraint 3: Has been caught lying at least once
+    if lie_counter[suspect_name] < 1:
+        return False
+
+    return True
+
+def solve_with_csp():
+    """
+    Filters and returns suspects who satisfy all CSP constraints.
+    """
+    print("\n🧩 CSP Solver Activated: Applying constraints to suspects...")
+    valid_candidates = [name for name in suspects if is_consistent(name)]
+
+    if valid_candidates:
+        print("✔️ Based on CSP, possible killer(s):")
+        for name in valid_candidates:
+            print(f" - {name} (probability: {round(suspects[name]['probability'], 2)})")
+    else:
+        print("❌ No suspect satisfied all CSP constraints.")
+    return valid_candidates
+
+# --- Run CSP to narrow down suspects ---
+valid_suspects_csp = solve_with_csp()
+
 # --- Round 4: Final Deduction ---
 print("\nRound 4: Final Deduction")
 # AI Analysis: Top 2 suspects based on probabilities
-print("\n🧠 AI Analysis: Top suspect(s) based on probabilities:")
+print("\n🧠 AI Analysis (with CSP Boost):")
 sorted_suspects = sorted(suspects.items(), key=lambda x: x[1]['probability'], reverse=True)
 top_suspects = sorted_suspects[:2]
 for ts in top_suspects:
-    print(f" - {ts[0]} (probability: {round(ts[1]['probability'], 2)})")
+    tag = "✅ CSP Valid" if ts[0] in valid_suspects_csp else "❌ CSP Invalid"
+    print(f" - {ts[0]} (probability: {round(ts[1]['probability'], 2)}) - {tag}")
 
 print("\n📊 Current Probabilities (Sorted):")
 for s, p in sorted(suspects.items(), key=lambda x: x[1]['probability'], reverse=True):
