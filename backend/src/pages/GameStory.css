@@ -1,0 +1,143 @@
+body {
+    background-color: rgb(154, 194, 234);
+}
+
+.dialogue-box {
+    position: absolute;
+    background-color: rgb(251, 240, 216, 0.9);
+    border: dashed 4px rgb(255, 89, 0);
+    color: rgb(255, 89, 0);
+    padding: 4px 20px;
+    border-radius: 18px;
+    font-family: "Press Start 2P";
+    font-weight: bold;
+    font-size: clamp(12px, 3vw, 13px);
+    text-align: center;
+    max-width: 400px;
+    z-index: 1200;
+  }
+
+  .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.745);
+    z-index: 999;
+  }
+
+  .report-img {
+    width: 40%;
+    position: fixed;
+    right: 12%;
+    top: 30px;
+    border: ridge 5px white;
+    border-radius: 20px;
+  }
+
+  .suspect-img {
+    width: 30%;
+    position: fixed;
+    left: 12%;
+    top: 30px;
+    border: ridge 5px white;
+    border-radius: 20px;
+    z-index: 1100;
+  }
+  
+.anchor-image{
+    width: 50%;
+  position: fixed;
+  top: 20px;
+  z-index: 0;
+}
+
+.breaking-news {
+    padding: 10px;
+    background: linear-gradient(180deg, rgb(219, 5, 5), rgb(151, 3, 3));
+    border-top: solid 5px rgb(151, 3, 3);
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden; /* Ensures text doesn't go beyond the div */
+    white-space: nowrap;
+}
+
+.headlines {
+    font-family: "Press Start 2P";
+    font-weight: bold;
+    letter-spacing: 4px;
+    font-size: 50px;
+    margin: 0;
+    color: blanchedalmond;
+    text-shadow: 4px 4px 0px black;
+    display: inline-block;
+    animation: slide 8s linear infinite;
+}
+
+.fade-out-screen {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  background-color: black;
+  opacity: 0;
+  z-index: 2000;
+  animation: fadeIn 2s forwards; /* You can tweak duration */
+}
+
+@keyframes screenFadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.fade-leave {
+  animation: screenFadeOut 1s ease forwards;
+}
+
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes slide {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(-100%);
+    }
+}
+
+
+@media (min-height: 768px){
+    .anchor-image{
+        top: 140px;
+    }
+
+    .report-img{
+        top: 15%;
+    }
+
+    .suspect-img{
+      top: 15%;
+    }
+}
