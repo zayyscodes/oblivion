@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request, redirect
 from flask_pymongo import PyMongo
+
 app = Flask(__name__)
 app.config["MONGO_URI"] = app.config["MONGO_URI"] = "mongodb+srv://k224543:AIProject@cluster0.ax1gaes.mongodb.net/oblivion?retryWrites=true&w=majority&appName=Cluster0"
 

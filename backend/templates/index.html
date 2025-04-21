@@ -1,0 +1,25 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Oblivion: Mystery Game</title>
+</head>
+<body>
+  <h1>Welcome to the Mystery Game!</h1>
+
+  <h2>Suspects:</h2>
+  <ul>
+    {% for name, data in suspects.items() %}
+      <li>{{ name }} - {{ data.trait }} - {{ data.motive }}</li>
+    {% endfor %}
+  </ul>
+
+  <h2>Fake Locations:</h2>
+  <ul>
+    {% for location in fake_locations %}
+      <li>{{ location }}</li>
+    {% endfor %}
+  </ul>
+</body>
+</html>
