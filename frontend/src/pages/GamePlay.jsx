@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./styles.css";
 import "./GamePlay.css";
 import dialogues from "./dialogues.js";
+import CountdownTimer from "../components/Timer.jsx";
 
 import background from "../assets/Something9.png";
 import inspector from "../assets/Something8.png";
@@ -101,7 +102,9 @@ function GamePlay() {
   };
 
   const [dialogueIndex, setDialogueIndex] = useState(0);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(1); // Tracks current game stage
+  const [timeLeft, setTimeLeft] = useState(180); // 3 minutes = 180 seconds
+  const [timerStarted, setTimerStarted] = useState(false); // Tracks if timer has started
   const [currentSuspect, setCurrentSuspect] = useState(0);
   const [currentWeapon, setCurrentWeapon] = useState(0);
   const [suspects, setSuspects] = useState(false);
@@ -122,6 +125,35 @@ function GamePlay() {
   };
 
   const currentDialogue = getDialogueSet();
+
+  useEffect(() => {
+    // Start timer only when step >= 3 and timer hasn't started yet
+    if (step >= 3 && !timerStarted && timeLeft > 0) {
+      setTimerStarted(true);
+    }
+
+    if (!timerStarted || timeLeft <= 0) return;
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(interval); // Cleanup on unmount or when timer stops
+  }, [timerStarted, timeLeft, step]);
+
+  // Format time for display
+  const formatTime = (seconds) => {
+    const min = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const sec = String(seconds % 60).padStart(2, "0");
+    return `${min}:${sec}`;
+  };
+
+  // Handle game end when time runs out
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      console.log("Time is up! Game Over.");
+    }
+  }, [timeLeft]);
 
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -157,9 +189,10 @@ function GamePlay() {
   const nextStep = () => {
     setFadeOut(true);
     setTimeout(() => {
-      setStep((prev) => (prev < 4 ? prev + 1 : prev));
+      setStep((prev) => (prev < 6 ? prev + 1 : prev));
       setFadeOut(false);
       setCurrentSuspectIndex(0);
+      setDialogueIndex(0);
     }, 500); // Match the transition duration
   };
 
@@ -213,13 +246,24 @@ function GamePlay() {
         setStage3Dialogues(stage3);
       });
   }, []);
-  
 
   /*useEffect(() => {
     const stage3 = buildStage3(alibi_claims);
     setStage3Dialogues(stage3);
   }, [alibi_claims]);
   */
+
+  useEffect(() => {
+    let interval;
+
+    if (step >= 3 && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    }
+
+    return () => clearInterval(interval);
+  }, [step, timeLeft]);
 
   return (
     <div
@@ -512,6 +556,8 @@ function GamePlay() {
               <p style={{ margin: 0 }}>STAGE 3: SUSPECTS' THEORIES</p>
             </div>
 
+            <CountdownTimer time={formatTime(timeLeft)} />
+
             <div
               style={{
                 display: "grid",
@@ -735,13 +781,11 @@ function GamePlay() {
                     </p>
 
                     <div className="suspect-dialogue-box">
-                      {stage3Dialogues[selectedSuspect]?.map(
-                        (line, idx) => (
-                          <p key={idx}>
-                            <strong>{line.char}:</strong> {line.text}
-                          </p>
-                        )
-                      )}
+                      {stage3Dialogues[selectedSuspect]?.map((line, idx) => (
+                        <p key={idx}>
+                          <strong>{line.char}:</strong> {line.text}
+                        </p>
+                      ))}
                     </div>
                   </>
                 )}
@@ -750,6 +794,286 @@ function GamePlay() {
           </div>
         )}
       </div>
+
+      <div className={`fade-container ${fadeOut ? "fade-out" : ""}`}>
+        {step === 4 && (
+          <div style={{ display: "grid", gridTemplateRows: "1fr 8fr" }}>
+            <div className="section-header">
+              <p style={{ margin: 0 }}>STAGE 4: ALIBI VERIFICATION</p>
+            </div>
+
+            <CountdownTimer time={formatTime(timeLeft)} />
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 6fr",
+                columnGap: "1%",
+                padding: "0 3.6vw 0 3vw",
+                height: "100vh",
+              }}
+            >
+              <div style={{ padding: "1rem" }}>
+                <button
+                  className="analyse-buttons"
+                  onClick={() => setWeapons(true)}
+                >
+                  WEAPONS
+                </button>
+
+                <button
+                  className="analyse-buttons"
+                  onClick={() => setSuspects(true)}
+                >
+                  SUSPECTS
+                </button>
+
+                <div className="proceed-option">
+                  <button className="proceed-buttons" onClick={nextStep}>
+                    PROCEED
+                  </button>
+                  <p className="warning">⚠️THERE IS NO GOING BACK</p>
+                </div>
+              </div>
+
+              <div className="game-box">
+                <div
+                  style={{
+                    position: "relative",
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      padding: "5px",
+                      left: "10px",
+                      top: "10px",
+                      right: "10px",
+                      bottom: "20px",
+                      borderRadius: "20px",
+                      display: "grid",
+                      gridTemplateColumns: "10% 1fr",
+                      zIndex: "100",
+                    }}
+                  >
+                    <div style={{
+                      padding: "0 1rem",
+                      fontFamily: "'Press Start 2P'",
+                      textAlign: "center",
+                      backgroundColor: "rgb(24, 2, 56)",
+                      color: "white",
+                      fontSize: "15px",
+                      boxShadow: "4px 0px 5px rgb(0, 0, 0)",
+                      textShadow: "4px 0px 5px rgb(0, 0, 0)",
+                      display: "flex",
+                      flexDirection: "column",
+                      rowGap: 0,
+                    }}>
+                      <p>C</p>
+                      <p>C</p>
+                      <p>T</p>
+                      <p>V</p>
+                    </div>
+
+                    <div  style={{
+                      padding: "0 1rem",
+                      fontFamily: "'Press Start 2P'",
+                      textAlign: "center",
+                      backgroundColor: "rgb(57, 48, 72)",
+                      color: "white",
+                      fontSize: "15px",
+                      zIndex: "99"
+                    }}>
+
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    borderTop: "dashed 2px white",
+                    position: "relative",
+                  }}
+                >
+                  <img
+                    src={detective}
+                    style={{
+                      width: "22%",
+                      marginTop: "20px",
+                      marginLeft: "75%",
+                      zIndex: "1200",
+                    }}
+                    alt="Detective"
+                  />
+
+                  {!showDialogue && (
+                    <>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateRows: "15% 80%",
+                          position: "absolute",
+                          padding: "5px",
+                          left: "20px",
+                          top: "20px",
+                          right: "30%",
+                          bottom: 0,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "100%",
+                            textShadow: "2px 2px 1px rgb(14, 42, 121)",
+                            fontFamily: "'Press Start 2P'",
+                            fontSize: "15px",
+                          }}
+                        >
+                          WHOSE ALIBI YOU WANT TO VERIFY?
+                        </div>
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr 1fr",
+                            columnGap: "15px",
+                            rowGap: "10px",
+                          }}
+                        >
+                          <button
+                            className="suspect-button"
+                            style={{
+                              backgroundColor: "rgb(236, 224, 121)",
+                              color: "black",
+                              borderColor: "rgb(255, 196, 0)",
+                            }}
+                            onClick={() => {
+                              setSelectedSuspect("chris");
+                              setDialogueIndex(0);
+                              setShowDialogue(true);
+                            }}
+                          >
+                            CHRIS
+                          </button>
+                          <button
+                            className="suspect-button"
+                            style={{
+                              backgroundColor: "rgb(139, 216, 239)",
+                              color: "black",
+                              borderColor: "rgb(2, 3, 80)",
+                            }}
+                            onClick={() => {
+                              setSelectedSuspect("jason");
+                              setDialogueIndex(0);
+                              setShowDialogue(true);
+                            }}
+                          >
+                            JASON
+                          </button>
+                          <button
+                            className="suspect-button"
+                            style={{
+                              backgroundColor: "rgb(190, 190, 190)",
+                              color: "black",
+                              borderColor: "rgb(73, 73, 73)",
+                            }}
+                            onClick={() => {
+                              setSelectedSuspect("kade");
+                              setDialogueIndex(0);
+                              setShowDialogue(true);
+                            }}
+                          >
+                            KADE
+                          </button>
+                          <button
+                            className="suspect-button"
+                            style={{
+                              backgroundColor: "rgb(119, 207, 136)",
+                              color: "black",
+                              borderColor: "rgb(27, 120, 38)",
+                            }}
+                            onClick={() => {
+                              setSelectedSuspect("poppy");
+                              setDialogueIndex(0);
+                              setShowDialogue(true);
+                            }}
+                          >
+                            POPPY
+                          </button>
+                          <button
+                            className="suspect-button"
+                            style={{
+                              backgroundColor: "rgb(171, 121, 236)",
+                              color: "black",
+                              borderColor: "rgb(77, 2, 138)",
+                            }}
+                            onClick={() => {
+                              setSelectedSuspect("violet");
+                              setDialogueIndex(0);
+                              setShowDialogue(true);
+                            }}
+                          >
+                            VIOLET
+                          </button>
+                          <button
+                            className="suspect-button"
+                            style={{
+                              backgroundColor: "rgb(238, 142, 216)",
+                              color: "black",
+                              borderColor: "rgb(203, 0, 132)",
+                            }}
+                            onClick={() => {
+                              setSelectedSuspect("zehab");
+                              setDialogueIndex(0);
+                              setShowDialogue(true);
+                            }}
+                          >
+                            ZEHAB
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {dialogueIndex === currentDialogue.length - 1 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      position: "absolute",
+                      top: "73%",
+                      zIndex: "1400",
+                      left: "8%",
+                    }}
+                  >
+                    <img
+                      src={down}
+                      style={{
+                        width: "8%",
+                      }}
+                    />
+                    <div
+                      className="warning"
+                      style={{
+                        margin: 0,
+                        width: "155px",
+                        textShadow: "2px 2px 2px grey",
+                      }}
+                    >
+                      PROCEED TO NEXT STAGE
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {timeLeft <= 0 && (
+        <div className={`fade-container ${fadeOut ? "fade-out" : ""}`}>
+          <h1>Game Over</h1>
+        </div>
+      )}
 
       {suspects && (
         <>
