@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from "react";
 import "../pages/styles.css";
 import header from "../assets/header.jpg";
-import { Link } from "react-router-dom";
+//import { Link } from "react-router-dom";
 import Creators from "../components/Creators";
+import { Link, useNavigate } from "react-router-dom";
 
 function Home() {
   const [showLiner, setShowLiner] = useState(false);
   const [showText, setShowText] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(window.innerWidth >= 1024);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     setTimeout(() => {
@@ -21,17 +24,67 @@ function Home() {
     }, 6000);
   }, []);
 
-  
-  useEffect(() => {
-      const handleResize = () => {
-        setIsFullScreen(window.innerWidth >= 1024);
-      };
-  
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
-    }, []);
-  
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsFullScreen(window.innerWidth >= 1024);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  /* Fetch API helper
+  const fetchApi = async (endpoint, method = "GET", body = null) => {
+    try {
+      const options = {
+        method,
+        headers: { "Content-Type": "application/json" },
+      };
+      if (body) options.body = JSON.stringify(body);
+      console.log(`Fetching ${endpoint} with method ${method}`);
+      const res = await fetch(`http://127.0.0.1:5000/api${endpoint}`, options);
+      const data = await res.json();
+      console.log(`Response from ${endpoint}:`, data);
+      if (data.status === "error") {
+        setError(data.message);
+        return null;
+      }
+      return data;
+    } catch (e) {
+      console.log("Fetch error:", e);
+      setError(`Network error: ${e.message}`);
+      return null;
+    }
+  };
+*/
+
+  // Start game logic
+  const startGame = async () => {
+    console.log("Start Game button clicked from Home!");
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/start_game", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
+      console.log("Response from /start_game:", JSON.stringify(data, null, 2));
+
+      if (data.status === "success") {
+        console.log("Game started successfully:", JSON.stringify(data, null, 2));
+        // Store gameId in localStorage
+        localStorage.setItem("gameId", data.game_id);
+        console.log("Stored gameId in localStorage:", data.game_id);
+        // Navigate to /gamestory without passing state
+        navigate("/gamestory");
+      } else {
+        console.error("Failed to start game:", data.message);
+      }
+    } catch (error) {
+      console.error("Error starting game:", error);
+    }
+  };
+  
   return (
     <div
       className="homepage"
@@ -77,8 +130,8 @@ function Home() {
       {showText && (
         <>
           <main className="body-container">
-          {!isFullScreen && (
-                <section
+            {!isFullScreen && (
+              <section
                 style={{
                   animation: "fade 1s",
                 }}
@@ -87,8 +140,8 @@ function Home() {
                   <strong>NOTE:</strong> To ensure better experience, you are ADVISED to play in FULL SCREEN MODE
                 </div>
 
-                </section>
-              )}
+              </section>
+            )}
             <section
               style={{
                 animation: "fade 1s",
@@ -118,9 +171,9 @@ function Home() {
               {isFullScreen && (
                 <div>
                   <Link to="/gamestory">
-                  <button className="button">
-                    START GAME
-                  </button>
+                    <button className="button">
+                      START GAME
+                    </button>
                   </Link>
                 </div>
               )}
@@ -197,17 +250,17 @@ function Home() {
             </section>
 
             {!isFullScreen && (
-                <section>
-                  <Link to="/gamestory">
-                  <button className="button">
+              <section>
+                <Link to="/gamestory">
+                  <button className="button" onClick={startGame}>
                     START GAME
                   </button>
-                  </Link>
-                </section>
-              )}
+                </Link>
+              </section>
+            )}
           </main>
 
-          <Creators/>
+          <Creators />
         </>
       )}
     </div>
