@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "../pages/styles.css";
 import header from "../assets/header.jpg";
-//import { Link } from "react-router-dom";
 import Creators from "../components/Creators";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -11,6 +10,12 @@ function Home() {
   const [isFullScreen, setIsFullScreen] = useState(window.innerWidth >= 1024);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  // Clear gameId from localStorage when Home mounts
+  useEffect(() => {
+    console.log("Home component mounted, clearing gameId from localStorage");
+    localStorage.removeItem("gameId");
+  }, []); // Empty dependency array ensures this runs only on mount
 
   useEffect(() => {
     setTimeout(() => {
@@ -33,31 +38,6 @@ function Home() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  /* Fetch API helper
-  const fetchApi = async (endpoint, method = "GET", body = null) => {
-    try {
-      const options = {
-        method,
-        headers: { "Content-Type": "application/json" },
-      };
-      if (body) options.body = JSON.stringify(body);
-      console.log(`Fetching ${endpoint} with method ${method}`);
-      const res = await fetch(`http://127.0.0.1:5000/api${endpoint}`, options);
-      const data = await res.json();
-      console.log(`Response from ${endpoint}:`, data);
-      if (data.status === "error") {
-        setError(data.message);
-        return null;
-      }
-      return data;
-    } catch (e) {
-      console.log("Fetch error:", e);
-      setError(`Network error: ${e.message}`);
-      return null;
-    }
-  };
-*/
 
   // Start game logic
   const startGame = async () => {
@@ -171,7 +151,7 @@ function Home() {
               {isFullScreen && (
                 <div>
                   <Link to="/gamestory">
-                    <button className="button">
+                    <button className="button" onClick={startGame}>
                       START GAME
                     </button>
                   </Link>
