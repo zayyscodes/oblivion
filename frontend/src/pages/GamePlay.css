@@ -1,5 +1,5 @@
-.section-header{
-  font-family: 'Press Start 2P';
+.section-header {
+  font-family: "Press Start 2P";
   padding: 10px 15px;
   text-align: center;
   z-index: 100;
@@ -14,7 +14,7 @@
 }
 
 .analyse-buttons {
-  margin: 5%;
+  margin: 1%;
   padding: 10px 5px;
   width: 250px;
   font-family: "Press Start 2P";
@@ -66,11 +66,10 @@
   top: 70%;
 }
 
-.suspect-dialogue-box{
+.suspect-dialogue-box {
   position: absolute;
-  background-color: rgb(19, 2, 101);
   border: dashed 4px rgb(251, 240, 216, 0.9);
-  color: rgb(251, 240, 216, 0.9);
+  color: rgba(0, 0, 0, 0.9);
   padding: 10px 12px;
   border-radius: 18px;
   font-family: "Press Start 2P";
@@ -131,7 +130,7 @@
   margin-top: 0;
 }
 
-.game-box{
+.game-box {
   background-color: rgba(9, 25, 106, 0.18);
   margin: 1rem;
   padding: 1rem;
@@ -219,12 +218,84 @@
   opacity: 0;
 }
 
-
 .suspect-button {
   background-color: rgb(19, 2, 101);
   border: dashed 4px rgba(251, 240, 216, 0.9);
   color: rgba(251, 240, 216, 0.9);
   padding: 10px 12px;
-  font-family: 'Press Start 2P';
+  font-family: "Press Start 2P";
 }
 
+.AI_popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgb(0, 35, 63);
+  padding: 2rem;
+  box-shadow: 0px 0px 35px rgb(0, 9, 12);
+  border-radius: 10px;
+  border: dashed 5px rgb(80, 117, 146);
+  font-weight: bold;
+  width: 80%;
+  font-family: "Montserrat", sans-serif;
+  max-width: 500px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.AI_popup_text {
+  position: absolute;
+  right: 40%;
+  top: 6rem;
+  max-width: 250px;
+  background-color: rgba(101, 146, 159, 0.9);
+  border: dashed 4px rgb(19, 2, 101);
+  color: rgb(18, 2, 96);
+  border-radius: 18px;
+  padding: 1rem;
+  font-family: "Press Start 2P";
+  font-weight: bold;
+  height: auto;
+  font-size: clamp(12px, 3.2vw, 13px);
+  z-index: 500;
+  font-family: "Press Start 2P";
+  color: rgb(247, 229, 213);
+  font-size: 1vw;
+}
+
+.start-text {
+  font-size: 1vw;
+  color: rgb(190, 230, 255);
+  font-family: "Press Start 2P";
+  margin-bottom: 1rem;
+}
+
+.suggestions {
+  background-color: rgb(5, 26, 56);
+  border: dashed 3px rgb(142, 196, 212);
+  color: rgb(24, 179, 221);
+  width: 211px;
+  margin-top: 30px;
+  margin-left: -500px;
+  padding: 1rem;
+  overflow: hidden;
+  border-radius: 10px;
+  transition: left 0.4s ease-in-out;
+}
+
+.suggestion-label {
+  font-size: 1vw;
+  font-family: "Press Start 2P";
+  text-shadow: 2px 2px 1px rgb(14, 70, 106);
+  letter-spacing: 2px;
+}
+
+.suggestion-text{
+  font-size: 1.2vw;
+  font-weight: bold;
+  color: rgb(178, 212, 222);
+  margin: 0;
+  text-shadow: 0px 0px 5px rgb(113, 144, 164);
+  font-family: 'Courier New', Courier, monospace;
+}

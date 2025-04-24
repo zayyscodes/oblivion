@@ -10,6 +10,7 @@ import inspector from "../assets/Something8.png";
 import detective from "../assets/Something3.png";
 import left from "../assets/arrow-left-solid.svg";
 import down from "../assets/arrow-down-solid.svg";
+import robo from "../assets/robot.PNG";
 
 // SUSPECTS
 import chris from "../assets/chris.JPEG";
@@ -41,7 +42,10 @@ function GamePlay() {
 
   // Retrieve gameId from localStorage
   const initialGameId = localStorage.getItem("gameId");
-  console.log("GamePlay loaded with initialGameId from localStorage:", initialGameId);
+  console.log(
+    "GamePlay loaded with initialGameId from localStorage:",
+    initialGameId
+  );
 
   // State
   const [gameId, setGameId] = useState(initialGameId);
@@ -55,248 +59,17 @@ function GamePlay() {
   const [suspectDialogues, setSuspectDialogues] = useState({});
   const [alibiClaims, setAlibiClaims] = useState({});
   const [stage3Dialogues, setStage3Dialogues] = useState({});
-  const [stage4Dialogues, setStage4Dialogues] = useState([]);
+  const [stage4Dialogues, setStage4Dialogues] = useState([]); // Dynamic dialogues for Stage 4
   const [selectedSuspect, setSelectedSuspect] = useState("");
   const [showDialogue, setShowDialogue] = useState(false);
   const [error, setError] = useState("");
-  const [timeLeft, setTimeLeft] = useState(180);
-  const [timerStarted, setTimerStarted] = useState(false);
-  const [verifiedSuspects, setVerifiedSuspects] = useState(new Set());
-  const [aiSuggestion, setAiSuggestion] = useState("");
-  const [hasSetAiSuggestion, setHasSetAiSuggestion] = useState(false);
-
-  console.log("Current step state:", step);
-
-  const hasFetchedInitialData = useRef(false);
-  const hasFetchedAlibis = useRef(false);
-  const hasStartedGame = useRef(false);
-
-  useEffect(() => {
-    if (step >= 3 && !timerStarted && timeLeft > 0) {
-      setTimerStarted(true);
-    }
-
-    if (!timerStarted || timeLeft <= 0) return;
-
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          console.log("Time is up! Game Over.");
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [timerStarted, timeLeft, step]);
-
-  const formatTime = (seconds) => {
-    const min = String(Math.floor(seconds / 60)).padStart(2, "0");
-    const sec = String(seconds % 60).padStart(2, "0");
-    return `${min}:${sec}`;
-  };
-
-  const startNewGame = async () => {
-    try {
-      const options = {
-        method: "POST",
-      };
-      console.log("Fetching http://127.0.0.1:5000/api/start_game with method POST");
-      const res = await fetch("http://127.0.0.1:5000/api/start_game", options);
-
-      if (!res.ok) {
-        console.log(`HTTP error! Status: ${res.status}, Status Text: ${res.statusText}`);
-        const errorData = await res.json().catch(() => ({}));
-        console.log("Error response from /start_game:", errorData);
-        throw new Error(`HTTP error! Status: ${res.status}, Message: ${errorData.message || res.statusText}`);
-      }
-
-      const data = await res.json();
-      console.log("Response from /start_game:", data);
-
-      if (data.status === "error") {
-        console.log(`Backend error: ${data.message}`);
-        setError(data.message);
-        return false;
-      }
-
-      console.log("Started new game with gameId:", data.game_id);
-      localStorage.setItem("gameId", data.game_id);
-      console.log("Updated localStorage gameId:", localStorage.getItem("gameId"));
-      setGameId(data.game_id);
-      setStep(1);
-      return true;
-    } catch (e) {
-      console.log("Fetch error for /start_game:", e.message);
-      setError("Failed to start a new game. Please try again.");
-      return false;
-    }
-  };
-
-  const fetchInitialData = async () => {
-    if (!gameId) {
-      console.log("No gameId available for fetchInitialData, redirecting to home...");
-      setError("No active game found. Please start a new game from the homepage.");
-      setTimeout(() => navigate("/"), 3000); // Redirect after 3 seconds
-      return;
-    }
-
-    try {
-      const url = `http://127.0.0.1:5000/api/round1_interview?game_id=${gameId}`;
-      console.log(`Fetching ${url} with method GET`);
-      const res = await fetch(url, {
-        method: "GET",
-      });
-
-      if (!res.ok) {
-        console.log(`HTTP error! Status: ${res.status}, Status Text: ${res.statusText}`);
-        const errorData = await res.json().catch(() => ({}));
-        console.log("Error response from /round1_interview:", errorData);
-
-        if (res.status === 400 && errorData.message?.includes("Invalid or missing game_id")) {
-          console.log("Invalid game_id detected, clearing localStorage and redirecting to home...");
-          localStorage.removeItem("gameId");
-          setGameId(null);
-          setError("Invalid game session. Please start a new game from the homepage.");
-          setTimeout(() => navigate("/"), 3000);
-          return;
-        }
-
-        throw new Error(`HTTP error! Status: ${res.status}, Message: ${errorData.message || res.statusText}`);
-      }
-
-      const data = await res.json();
-      console.log("Response from /round1_interview:", data);
-
-      if (data.status === "error") {
-        console.log(`Backend error: ${data.message}`);
-        setError(data.message);
-        return;
-      }
-
-      console.log("Successfully fetched suspect dialogues:", data.suspect_dialogues);
-      setSuspectDialogues(data.suspect_dialogues);
-    } catch (e) {
-      console.log("Fetch error for /round1_interview:", e.message);
-      setError("Failed to fetch suspect dialogues. Please ensure the backend is running and try again from the homepage.");
-      setTimeout(() => navigate("/"), 3000);
-    }
-  };
-
-  useEffect(() => {
-    if (gameId && !hasFetchedInitialData.current) {
-      hasFetchedInitialData.current = true;
-      console.log("Fetching initial data for gameId:", gameId);
-      fetchInitialData();
-    }
-  }, [gameId]);
-
-  const fetchAlibis = async () => {
-    try {
-      const url = `http://127.0.0.1:5000/api/round2_alibis?game_id=${gameId}`;
-      console.log(`Fetching ${url} with method GET`);
-      const res = await fetch(url, {
-        method: "GET",
-      });
-
-      if (!res.ok) {
-        console.log(`HTTP error! Status: ${res.status}, Status Text: ${res.statusText}`);
-        throw new Error(`HTTP error! Status: ${res.status}`);
-      }
-
-      const data = await res.json();
-      console.log("Response from /round2_alibis:", data);
-
-      if (data.status === "error") {
-        console.log(`Backend error: ${data.message}`);
-        setError(data.message);
-        return;
-      }
-
-      setAlibiClaims(data.alibi_claims);
-      const stage3 = buildStage3(data.alibi_claims);
-      setStage3Dialogues(stage3);
-    } catch (e) {
-      console.log("Fetch error for /round2_alibis:", e.message);
-      setError("Failed to fetch alibis. Please try again.");
-    }
-  };
-
-  useEffect(() => {
-    if (step === 3 && !hasFetchedAlibis.current) {
-      hasFetchedAlibis.current = true;
-      fetchAlibis();
-    }
-  }, [step, gameId]);
-
-  const verifyAlibi = async (suspectName) => {
-    try {
-      const url = `http://127.0.0.1:5000/api/round3_verify_alibi`;
-      console.log(`Fetching ${url} with method POST for suspect: ${suspectName}`);
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ suspect_name: suspectName }),
-      });
-
-      if (!res.ok) {
-        console.log(`HTTP error! Status: ${res.status}, Status Text: ${res.statusText}`);
-        throw new Error(`HTTP error! Status: ${res.status}`);
-      }
-
-      const data = await res.json();
-      console.log("Response from /round3_verify_alibi:", data);
-
-      if (data.status === "error") {
-        console.log(`Backend error: ${data.message}`);
-        setError(data.message);
-        return;
-      }
-
-      setVerifiedSuspects((prev) => new Set(prev).add(suspectName));
-
-      const stage4 = buildStage4(data);
-      setStage4Dialogues(stage4);
-
-      if (!hasSetAiSuggestion && data.most_suspected_suggestion) {
-        const suggestionFrontendName = Object.keys(SUSPECT_NAME_MAPPING).find(
-          (key) => SUSPECT_NAME_MAPPING[key] === data.most_suspected_suggestion
-        );
-        setAiSuggestion(`The AI suggests checking ${suggestionFrontendName}'s alibi.`);
-        setHasSetAiSuggestion(true);
-      } else if (!hasSetAiSuggestion && !data.most_suspected_suggestion) {
-        setAiSuggestion("All suspects have been verified.");
-        setHasSetAiSuggestion(true);
-      }
-
-      setShowDialogue(true);
-    } catch (e) {
-      console.log("Fetch error for /round3_verify_alibi:", e.message);
-      setError("Failed to verify alibi. Please try again.");
-    }
-  };
-
-  useEffect(() => {
-    const handleKeyPress = (event) => {
-      if (step === 1 || step === 2 || (step === 3 && showDialogue) || (step === 4 && showDialogue)) {
-        const dialogueSet = getDialogueSet();
-        if (event.code === "Space" || event.code === "ArrowRight") {
-          setDialogueIndex((prev) =>
-            prev < dialogueSet.length - 1 ? prev + 1 : prev
-          );
-        }
-        if (event.code === "ArrowLeft") {
-          setDialogueIndex((prev) => (prev > 0 ? prev - 1 : prev));
-        }
-      }
-    };
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [step, dialogueIndex, showDialogue]);
+  const [timeLeft, setTimeLeft] = useState(180); // 3 minutes = 180 seconds
+  const [timerStarted, setTimerStarted] = useState(false); // Tracks if timer has started
+  const [verifiedSuspects, setVerifiedSuspects] = useState(new Set()); // Tracks verified suspects in Stage 4
+  const [aiSuggestion, setAiSuggestion] = useState(""); // AI suggestion for next suspect to verify
+  const [hasSetAiSuggestion, setHasSetAiSuggestion] = useState(false); // Tracks if AI suggestion has been set
+  const [AIIndex, setAIIndex] = useState(0);
+  const [AIPop, setAIPop] = useState(false);
 
   const suspect_cards = [
     { id: 1, name: "chris", image: chris, displayName: "Chris Blaine" },
@@ -336,6 +109,8 @@ function GamePlay() {
 
   const suspectNames = suspect_cards.map((s) => s.name);
 
+  const weaponNames = weapon_cards.map((w) => w.name);
+
   const SUSPECT_NAME_MAPPING = {
     chris: "Chris Blaine",
     jason: "Jason Blue",
@@ -344,6 +119,367 @@ function GamePlay() {
     violet: "Violet Riley",
     zehab: "Zehab Rose",
   };
+
+  const AI_dialogues = [
+    "HELLO, DETECTIVE.",
+    "I AM YOUR ASSIGNED DETECTIVE ASSISTANT.",
+    "I AM A PERCEPTIVE INVESTIGATIVE PROCESSOR,",
+    "BUT YOU COULD REFER TO ME AS PiP.",
+    "I WILL ASSIST YOU IN ANALYZING CLUES AND CROSS-REFERENCING STATEMENTS.",
+    "REMEMBER: OBSERVATION IS KEY. 🔑",
+    "MY DATABASE HAS BEEN UPDATED WITH THEIR PROFILES AND MOTIVES,",
+    "AND MOVING FORTH I WILL HELP YOU IN SHORTLISTING THE SUSPECTS,",
+    "BY MONITORING PATTERNS AND INCONSISTENCIES.",
+    "JUSTICE SHALL PREVAIL!",
+  ];
+
+  // Debug step state
+  console.log("Current step state:", step);
+
+  // Prevent duplicate API calls during double rendering
+  const hasFetchedInitialData = useRef(false);
+  const hasFetchedAlibis = useRef(false);
+  const hasStartedGame = useRef(false); // New ref to prevent duplicate startNewGame calls
+
+  // Timer Logic (consolidated)
+  useEffect(() => {
+    if (!timerStarted || timeLeft <= 0) return;
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          console.log("Time is up! Game Over.");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval); // Cleanup
+  }, [timerStarted, timeLeft]);
+
+  // Format time for display
+  const formatTime = (seconds) => {
+    const min = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const sec = String(seconds % 60).padStart(2, "0");
+    return `${min}:${sec}`;
+  };
+
+  // Start a new game by calling /api/start_game
+  const startNewGame = async () => {
+    try {
+      const options = {
+        method: "POST",
+      };
+      console.log(
+        "Fetching http://127.0.0.1:5000/api/start_game with method POST"
+      );
+      const res = await fetch("http://127.0.0.1:5000/api/start_game", options);
+
+      if (!res.ok) {
+        console.log(
+          `HTTP error! Status: ${res.status}, Status Text: ${res.statusText}`
+        );
+        const errorData = await res.json().catch(() => ({}));
+        console.log("Error response from /start_game:", errorData);
+        throw new Error(
+          `HTTP error! Status: ${res.status}, Message: ${
+            errorData.message || res.statusText
+          }`
+        );
+      }
+
+      const data = await res.json();
+      console.log("Response from /start_game:", data);
+
+      if (data.status === "error") {
+        console.log(`Backend error: ${data.message}`);
+        setError(data.message);
+        return false;
+      }
+
+      console.log("Started new game with gameId:", data.game_id);
+      localStorage.setItem("gameId", data.game_id);
+      console.log(
+        "Updated localStorage gameId:",
+        localStorage.getItem("gameId")
+      );
+      setGameId(data.game_id);
+      setStep(1);
+      return true;
+    } catch (e) {
+      console.log("Fetch error for /start_game:", e.message);
+      setError("Failed to start a new game. Please try again.");
+      return false;
+    }
+  };
+
+  // Fallback: Fetch gameId if not found in localStorage
+  useEffect(() => {
+    if (!gameId && !hasStartedGame.current) {
+      console.log(
+        "No gameId in localStorage or state, attempting to start a new game..."
+      );
+      hasStartedGame.current = true; // Prevent duplicate calls
+      startNewGame();
+    }
+  }, [gameId]); // Dependency on gameId ensures this runs only when gameId changes
+
+  // Fetch initial data for Stage 2 (Round 1 Interview)
+  const fetchInitialData = async (retryCount = 0) => {
+    const maxRetries = 3;
+    if (!gameId) {
+      console.log("No gameId available for fetchInitialData, aborting...");
+      return;
+    }
+
+    try {
+      const url = `http://127.0.0.1:5000/api/round1_interview?game_id=${gameId}`;
+      console.log(
+        `Fetching ${url} with method GET (Attempt ${
+          retryCount + 1
+        }/${maxRetries})`
+      );
+      const res = await fetch(url, {
+        method: "GET",
+      });
+
+      if (!res.ok) {
+        console.log(
+          `HTTP error! Status: ${res.status}, Status Text: ${res.statusText}`
+        );
+        const errorData = await res.json().catch(() => ({}));
+        console.log("Error response from /round1_interview:", errorData);
+
+        // If the game_id is invalid, start a new game
+        if (
+          res.status === 400 &&
+          errorData.message?.includes("Invalid or missing game_id")
+        ) {
+          console.log(
+            "Invalid game_id detected, clearing localStorage and starting a new game..."
+          );
+          localStorage.removeItem("gameId");
+          setGameId(null);
+          hasStartedGame.current = false; // Allow starting a new game
+          const started = await startNewGame();
+          if (started) {
+            // Retry fetching with the new gameId
+            const retryUrl = `http://127.0.0.1:5000/api/round1_interview?game_id=${localStorage.getItem(
+              "gameId"
+            )}`;
+            console.log(`Retrying fetch with new gameId: ${retryUrl}`);
+            const retryRes = await fetch(retryUrl, {
+              method: "GET",
+            });
+
+            if (!retryRes.ok) {
+              throw new Error(`Retry HTTP error! Status: ${retryRes.status}`);
+            }
+
+            const retryData = await retryRes.json();
+            console.log("Retry response from /round1_interview:", retryData);
+
+            if (retryData.status === "error") {
+              setError(retryData.message);
+              return;
+            }
+
+            setSuspectDialogues(retryData.suspect_dialogues);
+          }
+          return;
+        }
+
+        throw new Error(
+          `HTTP error! Status: ${res.status}, Message: ${
+            errorData.message || res.statusText
+          }`
+        );
+      }
+
+      const data = await res.json();
+      console.log("Response from /round1_interview:", data);
+
+      if (data.status === "error") {
+        console.log(`Backend error: ${data.message}`);
+        setError(data.message);
+        return;
+      }
+
+      console.log(
+        "Successfully fetched suspect dialogues:",
+        data.suspect_dialogues
+      );
+      setSuspectDialogues(data.suspect_dialogues);
+    } catch (e) {
+      console.log("Fetch error for /round1_interview:", e.message);
+      if (retryCount < maxRetries - 1) {
+        console.log(
+          `Retrying fetch (Attempt ${retryCount + 2}/${maxRetries})...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second before retrying
+        await fetchInitialData(retryCount + 1);
+      } else {
+        setError(
+          "Failed to fetch suspect dialogues after multiple attempts. Please ensure the backend is running and try again."
+        );
+      }
+    }
+  };
+
+  // Fetch initial data only after gameId is set and stable
+  useEffect(() => {
+    if (gameId && !hasFetchedInitialData.current) {
+      hasFetchedInitialData.current = true;
+      console.log("Fetching initial data for gameId:", gameId);
+      fetchInitialData();
+    }
+  }, [gameId]); // Dependency on gameId ensures this runs only when gameId changes
+
+  // Fetch alibis for Stage 3 (Round 2 Alibis)
+  const fetchAlibis = async () => {
+    try {
+      const url = `http://127.0.0.1:5000/api/round2_alibis?game_id=${gameId}`;
+      console.log(`Fetching ${url} with method GET`);
+      const res = await fetch(url, {
+        method: "GET",
+      });
+
+      if (!res.ok) {
+        console.log(
+          `HTTP error! Status: ${res.status}, Status Text: ${res.statusText}`
+        );
+        throw new Error(`HTTP error! Status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log("Response from /round2_alibis:", data);
+
+      if (data.status === "error") {
+        console.log(`Backend error: ${data.message}`);
+        setError(data.message);
+        return;
+      }
+
+      setAlibiClaims(data.alibi_claims);
+      const stage3 = buildStage3(data.alibi_claims);
+      setStage3Dialogues(stage3);
+    } catch (e) {
+      console.log("Fetch error for /round2_alibis:", e.message);
+      setError("Failed to fetch alibis. Please try again.");
+    }
+  };
+
+  useEffect(() => {
+    if (step === 3 && !hasFetchedAlibis.current) {
+      hasFetchedAlibis.current = true;
+      fetchAlibis();
+    }
+  }, [step, gameId]);
+
+  // Verify alibi for Stage 4 (Round 3 Verify Alibi)
+  const verifyAlibi = async (suspectName) => {
+    try {
+      const url = `http://127.0.0.1:5000/api/round3_verify_alibi`;
+      console.log(
+        `Fetching ${url} with method POST for suspect: ${suspectName}`
+      );
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ suspect_name: suspectName }),
+      });
+
+      if (!res.ok) {
+        console.log(
+          `HTTP error! Status: ${res.status}, Status Text: ${res.statusText}`
+        );
+        throw new Error(`HTTP error! Status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log("Response from /round3_verify_alibi:", data);
+
+      if (data.status === "error") {
+        console.log(`Backend error: ${data.message}`);
+        setError(data.message);
+        return;
+      }
+
+      // Add suspect to verified list
+      setVerifiedSuspects((prev) => new Set(prev).add(suspectName));
+
+      // Build dialogues dynamically using the backend response
+      const stage4 = buildStage4(data);
+      setStage4Dialogues(stage4);
+
+      // Set AI suggestion only on the first verification
+      if (!hasSetAiSuggestion && data.most_suspected_suggestion) {
+        const suggestionFrontendName = Object.keys(SUSPECT_NAME_MAPPING).find(
+          (key) => SUSPECT_NAME_MAPPING[key] === data.most_suspected_suggestion
+        );
+        setAiSuggestion(
+          `The AI suggests checking ${suggestionFrontendName}'s alibi.`
+        );
+        setHasSetAiSuggestion(true);
+      } else if (!hasSetAiSuggestion && !data.most_suspected_suggestion) {
+        setAiSuggestion("All suspects have been verified.");
+        setHasSetAiSuggestion(true);
+      }
+
+      setShowDialogue(true);
+    } catch (e) {
+      console.log("Fetch error for /round3_verify_alibi:", e.message);
+      setError("Failed to verify alibi. Please try again.");
+    }
+  };
+
+  // For regular dialogue
+  useEffect(() => {
+    const handleDialogueKeyPress = (event) => {
+      if (
+        step === 1 ||
+        step === 2 ||
+        (step === 3 && showDialogue) ||
+        (step === 4 && showDialogue)
+      ) {
+        const dialogueSet = getDialogueSet();
+        if (event.code === "Space" || event.code === "ArrowRight") {
+          setDialogueIndex((prev) =>
+            prev < dialogueSet.length - 1 ? prev + 1 : prev
+          );
+        }
+        if (event.code === "ArrowLeft") {
+          setDialogueIndex((prev) => (prev > 0 ? prev - 1 : prev));
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleDialogueKeyPress);
+    return () => window.removeEventListener("keydown", handleDialogueKeyPress);
+  }, [step, dialogueIndex, showDialogue]);
+
+  // For AI assistant (PIP)
+  useEffect(() => {
+    const handleAIKeyPress = (event) => {
+      if (step === 3 && AIPop) {
+        if (event.code === "Space" || event.code === "ArrowRight") {
+          setAIIndex((prev) =>
+            prev < AI_dialogues.length - 1 ? prev + 1 : prev
+          );
+        }
+        if (event.code === "ArrowLeft") {
+          setAIIndex((prev) => (prev > 0 ? prev - 1 : prev));
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleAIKeyPress);
+    return () => window.removeEventListener("keydown", handleAIKeyPress);
+  }, [step, AIIndex, AIPop]);
 
   const buildStage3 = (alibiClaims) => {
     const phrases = [
@@ -360,8 +496,11 @@ function GamePlay() {
         { char: "detective", text: "Where was everyone when it happened?" },
       ];
       for (const [target, location] of Object.entries(claims)) {
-        const targetName = suspect_cards.find((s) => s.displayName === target)?.name || target.toLowerCase();
-        const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+        const targetName =
+          suspect_cards.find((s) => s.displayName === target)?.name ||
+          target.toLowerCase();
+        const randomPhrase =
+          phrases[Math.floor(Math.random() * phrases.length)];
         dialogue.push({
           char: suspect,
           text: randomPhrase(targetName, location),
@@ -376,8 +515,12 @@ function GamePlay() {
     const verification = data.verification;
     const othersStatements = data.others_statements;
 
+    // Initial dialogue to start the verification
     const dialogue = [
-      { char: "detective", text: `Let's verify ${verification.suspect}'s alibi.` },
+      {
+        char: "detective",
+        text: `Let's verify ${verification.suspect}'s alibi.`,
+      },
       {
         char: "detective",
         text: `${verification.suspect} claimed to be at the ${verification.claimed_location}.`,
@@ -388,13 +531,18 @@ function GamePlay() {
       },
     ];
 
+    // Add statements from other suspects
     othersStatements.forEach((statement) => {
       const accuserFrontendName = Object.keys(SUSPECT_NAME_MAPPING).find(
         (key) => SUSPECT_NAME_MAPPING[key] === statement.accuser
       );
       dialogue.push({
         char: "detective",
-        text: `${accuserFrontendName} said ${verification.suspect} was at the ${statement.claimed_location}. This statement is ${statement.is_correct ? "correct" : "incorrect"}.`,
+        text: `${accuserFrontendName} said ${verification.suspect} was at the ${
+          statement.claimed_location
+        }. This statement is ${
+          statement.is_correct ? "correct" : "incorrect"
+        }.`,
       });
     });
 
@@ -406,40 +554,24 @@ function GamePlay() {
       if (!dialogues || !dialogues.stage1) {
         console.error("dialogues.stage1 is undefined, using fallback");
         return [
-          { char: "inspector", text: "A murder has occurred. Let's investigate.", id: "candlestick" },
+          {
+            char: "inspector",
+            text: "A murder has occurred. Let's investigate.",
+            id: "candlestick",
+          },
           { char: "detective", text: "Understood. What did you find?" },
-          { char: "inspector", text: "The weapon appears to be a candlestick.", id: "candlestick" },
+          {
+            char: "inspector",
+            text: "The weapon appears to be a candlestick.",
+            id: "candlestick",
+          },
         ];
       }
       return dialogues.stage1;
     }
     if (step === 2) {
       const suspectName = suspectNames[currentSuspectIndex];
-      const backendDialogues = suspectDialogues[suspectName] || [];
-      const staticDialogues = dialogues.stage2[suspectName] || [];
-  
-      // Extract backend dialogues up to rebuttal (indices 0-5 for most, 0-6 for Kate)
-      const isKate = suspectName === "kate";
-      const rebuttalIndex = isKate ? 6 : 5; // Kate has an extra intro line
-      const backendUpToRebuttal = backendDialogues.slice(0, rebuttalIndex + 1);
-  
-      // Fallback if backend dialogues are missing
-      if (backendUpToRebuttal.length < (isKate ? 7 : 6)) {
-        console.warn(`Incomplete backend dialogues for ${suspectName}, using fallback`);
-        const fallbackDialogues = [
-          { id: "intro", char: "detective", text: `Interviewing ${suspectName}. What's your story?` },
-          { id: "intro", char: suspectName, text: "I’m just here, detective. No trouble." },
-          ...(isKate ? [{ id: "intro", char: "kate", text: "Let’s make this quick." }] : []),
-          { id: "alibi", char: "detective", text: `Where were you last night, ${suspectName}?` },
-          { id: "alibi", char: suspectName, text: "I was minding my own business, detective." },
-          { id: "alibi", char: "detective", text: "That’s a bit vague. Care to clarify?" },
-          { id: "alibi", char: suspectName, text: "Nothing to hide here. Just a quiet night." },
-        ];
-        return [...fallbackDialogues, ...staticDialogues];
-      }
-  
-      // Combine backend dialogues (up to rebuttal) with static dialogues (post-rebuttal)
-      return [...backendUpToRebuttal, ...staticDialogues];
+      return suspectDialogues[suspectName] || [];
     }
     if (step === 3) {
       return stage3Dialogues[selectedSuspect] || [];
@@ -462,9 +594,13 @@ function GamePlay() {
       setCurrentSuspectIndex(0);
       setSelectedSuspect("");
       setShowDialogue(false);
-      setStage4Dialogues([]);
-      setAiSuggestion("");
-      setHasSetAiSuggestion(false);
+      setStage4Dialogues([]); // Reset Stage 4 dialogues when moving to next stage
+      setAiSuggestion(""); // Reset AI suggestion
+      setHasSetAiSuggestion(false); // Reset AI suggestion flag4
+
+      if (step === 2) {
+        setAIPop(true);
+      }
     }, 500);
   };
 
@@ -474,7 +610,9 @@ function GamePlay() {
   };
 
   const prevSuspect = () => {
-    setCurrentSuspectIndex((prev) => (prev - 1 + suspect_cards.length) % suspect_cards.length);
+    setCurrentSuspectIndex(
+      (prev) => (prev - 1 + suspect_cards.length) % suspect_cards.length
+    );
     setDialogueIndex(0);
   };
 
@@ -483,20 +621,23 @@ function GamePlay() {
   };
 
   const prevWeapon = () => {
-    setCurrentWeapon((prev) => (prev - 1 + weapon_cards.length) % weapon_cards.length);
+    setCurrentWeapon(
+      (prev) => (prev - 1 + weapon_cards.length) % weapon_cards.length
+    );
   };
 
+  // Clear gameId from localStorage when navigating to home
   const navigateToHome = () => {
     console.log("Clearing gameId from localStorage");
     localStorage.removeItem("gameId");
     navigate("/");
   };
 
+  // No gameId fallback
   if (!gameId) {
     return (
       <div className="game-play">
         <h1>No active game found</h1>
-        <p>Please return to the homepage to start a new game.</p>
         <button onClick={navigateToHome}>Go to Home</button>
       </div>
     );
@@ -511,10 +652,13 @@ function GamePlay() {
         backgroundColor: "black",
       }}
     >
-      {error && <p style={{ color: "red", textAlign: "center" }}>Error: {error}</p>}
+      {error && (
+        <p style={{ color: "red", textAlign: "center" }}>Error: {error}</p>
+      )}
 
       <img src={background} className="background" alt="background" />
 
+      {/* Stage 1: Inspector's Findings */}
       <div className={`fade-container ${fadeOut ? "fade-out" : ""}`}>
         {step === 1 && (
           <div style={{ display: "grid", gridTemplateRows: "1fr 8fr" }}>
@@ -532,7 +676,10 @@ function GamePlay() {
               }}
             >
               <div style={{ padding: "1rem" }}>
-                <button className="analyse-buttons" onClick={() => setWeaponsOpen(true)}>
+                <button
+                  className="analyse-buttons"
+                  onClick={() => setWeaponsOpen(true)}
+                >
                   WEAPONS
                 </button>
                 <div className="proceed-option">
@@ -605,7 +752,11 @@ function GamePlay() {
                           left: "8%",
                         }}
                       >
-                        <img src={down} style={{ width: "8%" }} alt="Down Arrow" />
+                        <img
+                          src={down}
+                          style={{ width: "8%" }}
+                          alt="Down Arrow"
+                        />
                         <div
                           className="warning"
                           style={{
@@ -630,6 +781,7 @@ function GamePlay() {
         )}
       </div>
 
+      {/* Stage 2: Interrogate Suspects (Integrated with Round 1 Interview) */}
       <div className={`fade-container ${fadeOut ? "fade-out" : ""}`}>
         {step === 2 && (
           <div style={{ display: "grid", gridTemplateRows: "1fr 8fr" }}>
@@ -647,7 +799,10 @@ function GamePlay() {
               }}
             >
               <div style={{ padding: "1rem", zIndex: "110" }}>
-                <button className="analyse-buttons" onClick={() => setWeaponsOpen(true)}>
+                <button
+                  className="analyse-buttons"
+                  onClick={() => setWeaponsOpen(true)}
+                >
                   WEAPONS
                 </button>
 
@@ -704,7 +859,37 @@ function GamePlay() {
                     currentDialogue[dialogueIndex].char !== "detective"
                       ? "suspect-dialogue-box"
                       : "detective-dialogue-box"
-                    }
+                  }
+                  style={
+                    currentDialogue[dialogueIndex].char !== "detective"
+                      ? {
+                          backgroundColor:
+                            suspectNames[currentSuspectIndex] === "chris"
+                              ? "rgb(236, 224, 121)"
+                              : suspectNames[currentSuspectIndex] === "jason"
+                              ? "rgb(139, 216, 239)"
+                              : suspectNames[currentSuspectIndex] === "kate"
+                              ? "rgb(190, 190, 190)"
+                              : suspectNames[currentSuspectIndex] === "poppy"
+                              ? "rgb(119, 207, 136)"
+                              : suspectNames[currentSuspectIndex] === "violet"
+                              ? "rgb(171, 121, 236)"
+                              : "rgb(238, 142, 216)",
+                          borderColor:
+                            suspectNames[currentSuspectIndex] === "chris"
+                              ? "rgb(255, 196, 0)"
+                              : suspectNames[currentSuspectIndex] === "jason"
+                              ? "rgb(2, 3, 80)"
+                              : suspectNames[currentSuspectIndex] === "kate"
+                              ? "rgb(73, 73, 73)"
+                              : suspectNames[currentSuspectIndex] === "poppy"
+                              ? "rgb(27, 120, 38)"
+                              : suspectNames[currentSuspectIndex] === "violet"
+                              ? "rgb(77, 2, 138)"
+                              : "rgb(203, 0, 132)",
+                        }
+                      : {}
+                  }
                 >
                   {currentDialogue[dialogueIndex].text}
                 </p>
@@ -721,7 +906,11 @@ function GamePlay() {
                         left: "40%",
                       }}
                     >
-                      <img src={left} style={{ width: "8%" }} alt="Left Arrow" />
+                      <img
+                        src={left}
+                        style={{ width: "8%" }}
+                        alt="Left Arrow"
+                      />
                       <div
                         className="warning"
                         style={{
@@ -747,7 +936,11 @@ function GamePlay() {
                         left: "8%",
                       }}
                     >
-                      <img src={down} style={{ width: "8%" }} alt="Down Arrow" />
+                      <img
+                        src={down}
+                        style={{ width: "8%" }}
+                        alt="Down Arrow"
+                      />
                       <div
                         className="warning"
                         style={{
@@ -766,6 +959,7 @@ function GamePlay() {
         )}
       </div>
 
+      {/* Stage 3: Suspects' Theories (Integrated with Round 2 Alibis) */}
       <div className={`fade-container ${fadeOut ? "fade-out" : ""}`}>
         {step === 3 && (
           <div style={{ display: "grid", gridTemplateRows: "1fr 8fr" }}>
@@ -773,7 +967,66 @@ function GamePlay() {
               <p style={{ margin: 0 }}>STAGE 3: SUSPECTS' THEORIES</p>
             </div>
 
-            <CountdownTimer time={formatTime(timeLeft)} />
+            {AIPop && AIIndex < AI_dialogues.length && (
+              <>
+                <div className="overlay" />
+                <div className="AI_popup">
+                  <p
+                    className="AI_popup_text"
+                    style={{
+                      transition: "opacity 2s ease-out", // Add transition for fade-out effect
+                      opacity: AIIndex >= AI_dialogues.length - 1 ? 0 : 1,
+                    }}
+                  >
+                    {AI_dialogues[AIIndex]}
+                  </p>
+
+                  <img
+                    src={robo}
+                    style={{
+                      width: "35%",
+                      marginLeft: "65%",
+                      transition: "opacity 2s ease-out", // Add transition for fade-out effect
+                      opacity: AIIndex >= AI_dialogues.length - 1 ? 0 : 1, // Fade out when dialogue ends
+                    }}
+                  />
+                </div>
+              </>
+            )}
+
+            {AIPop && AIIndex >= AI_dialogues.length - 1 && (
+              <>
+                <div className="AI_popup" style={{ textAlign: "center" }}>
+                  <p className="start-text">FROM THIS ROUND ONWARD...</p>
+                  <p className="start-text">⏱️ A TIMER WILL START.</p>
+                  <p className="start-text">🕵️‍♂️ YOU HAVE 3 MINUTES TO:</p>
+                  <p className="start-text">
+                    INTERVIEW SUSPECTS, VERIFY FACTS & MAKE DEDUCTIONS TO WIN.
+                  </p>
+
+                  <button
+                    style={{
+                      zIndex: "1300",
+                      fontSize: "1.2vw",
+                      backgroundColor: "white",
+                      color: "green",
+                      border: "dashed 2px green",
+                      fontFamily: "'Press Start 2P'",
+                      padding: "1rem",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      setTimerStarted(true);
+                      setAIPop(false);
+                    }}
+                  >
+                    START
+                  </button>
+                </div>
+              </>
+            )}
+
+            {!AIPop && <CountdownTimer time={formatTime(timeLeft)} />}
 
             <div
               style={{
@@ -785,11 +1038,17 @@ function GamePlay() {
               }}
             >
               <div style={{ padding: "1rem", zIndex: "110" }}>
-                <button className="analyse-buttons" onClick={() => setWeaponsOpen(true)}>
+                <button
+                  className="analyse-buttons"
+                  onClick={() => setWeaponsOpen(true)}
+                >
                   WEAPONS
                 </button>
 
-                <button className="analyse-buttons" onClick={() => setSuspectsOpen(true)}>
+                <button
+                  className="analyse-buttons"
+                  onClick={() => setSuspectsOpen(true)}
+                >
                   SUSPECTS
                 </button>
 
@@ -832,7 +1091,12 @@ function GamePlay() {
                     </>
                   )}
                 </div>
-                <div style={{ borderTop: "dashed 2px white", position: "relative" }}>
+                <div
+                  style={{
+                    borderTop: "dashed 2px white",
+                    position: "relative",
+                  }}
+                >
                   <img
                     src={detective}
                     style={{
@@ -940,6 +1204,7 @@ function GamePlay() {
         )}
       </div>
 
+      {/* Stage 4: Alibi Verification (Integrated with Round 3 Verify Alibi) */}
       <div className={`fade-container ${fadeOut ? "fade-out" : ""}`}>
         {step === 4 && (
           <div style={{ display: "grid", gridTemplateRows: "1fr 8fr" }}>
@@ -959,13 +1224,33 @@ function GamePlay() {
               }}
             >
               <div style={{ padding: "1rem" }}>
-                <button className="analyse-buttons" onClick={() => setWeaponsOpen(true)}>
+                <button
+                  className="analyse-buttons"
+                  onClick={() => setWeaponsOpen(true)}
+                >
                   WEAPONS
                 </button>
 
-                <button className="analyse-buttons" onClick={() => setSuspectsOpen(true)}>
+                <button
+                  className="analyse-buttons"
+                  onClick={() => setSuspectsOpen(true)}
+                >
                   SUSPECTS
                 </button>
+
+                {!hasSetAiSuggestion && (
+                  <div
+                    className="suggestions"
+                    style={{
+                      marginLeft: "2px",
+                    }}
+                  >
+                    <label className="suggestion-label"> PiP SUGGESTS</label>
+                    <p className="suggestion-text">
+                      The AI suggests checking SYEDA ZEHRA WAQAR's alibi.
+                    </p>
+                  </div>
+                )}
 
                 <div className="proceed-option">
                   <button className="proceed-buttons" onClick={nextStep}>
@@ -1023,20 +1308,29 @@ function GamePlay() {
                         zIndex: "99",
                       }}
                     >
-                      {showDialogue && dialogueIndex >= 2 && stage4Dialogues.length > 2 ? (
+                      {showDialogue &&
+                      dialogueIndex >= 2 &&
+                      stage4Dialogues.length > 2 ? (
                         <p style={{ margin: "0", color: "#FFD700" }}>
                           {stage4Dialogues[2].text}
                         </p>
                       ) : (
                         <p style={{ margin: "0", color: "#FFD700" }}>
-                          {showDialogue ? "Verifying alibi..." : "Select a suspect to verify their alibi."}
+                          {showDialogue
+                            ? "Verifying alibi..."
+                            : "Select a suspect to verify their alibi."}
                         </p>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <div style={{ borderTop: "dashed 2px white", position: "relative" }}>
+                <div
+                  style={{
+                    borderTop: "dashed 2px white",
+                    position: "relative",
+                  }}
+                >
                   <img
                     src={detective}
                     style={{
@@ -1111,8 +1405,12 @@ function GamePlay() {
                                     : suspect === "violet"
                                     ? "rgb(77, 2, 138)"
                                     : "rgb(203, 0, 132)",
-                                opacity: verifiedSuspects.has(suspect) ? 0.5 : 1,
-                                cursor: verifiedSuspects.has(suspect) ? "not-allowed" : "pointer",
+                                opacity: verifiedSuspects.has(suspect)
+                                  ? 0.5
+                                  : 1,
+                                cursor: verifiedSuspects.has(suspect)
+                                  ? "not-allowed"
+                                  : "pointer",
                               }}
                               onClick={() => {
                                 if (!verifiedSuspects.has(suspect)) {
@@ -1133,30 +1431,71 @@ function GamePlay() {
                 </div>
 
                 {showDialogue && (
-                  <p className="detective-dialogue-box">{currentDialogue[dialogueIndex].text}</p>
+                  <p className="detective-dialogue-box">
+                    {currentDialogue[dialogueIndex].text}
+                  </p>
                 )}
 
-                {showDialogue && dialogueIndex === currentDialogue.length - 1 && (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "row",
-                      position: "absolute",
-                      top: "73%",
-                      zIndex: "1400",
-                      left: "8%",
-                    }}
-                  >
-                    <button
-                      className="next-button"
-                      style={{ backgroundColor: "transparent", border: "none" }}
-                      onClick={() => {
-                        setShowDialogue(false);
-                        setDialogueIndex(0);
-                        setSelectedSuspect("");
+                {showDialogue &&
+                  dialogueIndex === currentDialogue.length - 1 && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        position: "absolute",
+                        top: "73%",
+                        zIndex: "1400",
+                        left: "8%",
                       }}
                     >
-                      <img src={left} style={{ width: "8%" }} alt="Left Arrow" />
+                      <button
+                        className="next-button"
+                        style={{
+                          backgroundColor: "transparent",
+                          border: "none",
+                        }}
+                        onClick={() => {
+                          setShowDialogue(false);
+                          setDialogueIndex(0);
+                          setSelectedSuspect("");
+                        }}
+                      >
+                        <img
+                          src={left}
+                          style={{ width: "8%" }}
+                          alt="Left Arrow"
+                        />
+                        <div
+                          className="warning"
+                          style={{
+                            margin: 0,
+                            width: "155px",
+                            textShadow: "2px 2px 2px grey",
+                          }}
+                        >
+                          CHANGE SUSPECT
+                        </div>
+                      </button>
+                    </div>
+                  )}
+
+                {!showDialogue &&
+                  verifiedSuspects.size === suspectNames.length && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        position: "absolute",
+                        top: "73%",
+                        zIndex: "1400",
+                        left: "8%",
+                      }}
+                    >
+                      <img
+                        src={down}
+                        style={{ width: "8%" }}
+                        alt="Down Arrow"
+                      />
                       <div
                         className="warning"
                         style={{
@@ -1165,42 +1504,17 @@ function GamePlay() {
                           textShadow: "2px 2px 2px grey",
                         }}
                       >
-                        CHANGE SUSPECT
+                        PROCEED TO NEXT STAGE
                       </div>
-                    </button>
-                  </div>
-                )}
-
-                {!showDialogue && verifiedSuspects.size === suspectNames.length && (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "row",
-                      position: "absolute",
-                      top: "73%",
-                      zIndex: "1400",
-                      left: "8%",
-                    }}
-                  >
-                    <img src={down} style={{ width: "8%" }} alt="Down Arrow" />
-                    <div
-                      className="warning"
-                      style={{
-                        margin: 0,
-                        width: "155px",
-                        textShadow: "2px 2px 2px grey",
-                      }}
-                    >
-                      PROCEED TO NEXT STAGE
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
             </div>
           </div>
         )}
       </div>
 
+      {/* Stage 5: Placeholder (Final Deduction) */}
       <div className={`fade-container ${fadeOut ? "fade-out" : ""}`}>
         {step === 5 && (
           <div style={{ display: "grid", gridTemplateRows: "1fr 8fr" }}>
@@ -1220,11 +1534,17 @@ function GamePlay() {
               }}
             >
               <div style={{ padding: "1rem" }}>
-                <button className="analyse-buttons" onClick={() => setWeaponsOpen(true)}>
+                <button
+                  className="analyse-buttons"
+                  onClick={() => setWeaponsOpen(true)}
+                >
                   WEAPONS
                 </button>
 
-                <button className="analyse-buttons" onClick={() => setSuspectsOpen(true)}>
+                <button
+                  className="analyse-buttons"
+                  onClick={() => setSuspectsOpen(true)}
+                >
                   SUSPECTS
                 </button>
 
@@ -1237,7 +1557,11 @@ function GamePlay() {
               </div>
 
               <div className="game-box">
-                <div style={{ borderTop: "dashed 2px white", position: "relative" }}>
+                <div
+                  style={{
+                    position: "relative",
+                  }}
+                >
                   <img
                     src={detective}
                     style={{
@@ -1248,16 +1572,236 @@ function GamePlay() {
                     }}
                     alt="Detective"
                   />
-                  <p style={{ color: "white", textAlign: "center" }}>
-                    Final Deduction stage coming soon...
-                  </p>
+
+                  {!showDialogue && (
+                    <>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateRows: "15% 80%",
+                          position: "absolute",
+                          left: "20px",
+                          top: "5px",
+                          right: "30%",
+                          bottom: 0,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "100%",
+                            textShadow: "2px 2px 1px rgb(14, 42, 121)",
+                            fontFamily: "'Press Start 2P'",
+                            fontSize: "15px",
+                            color: "white",
+                          }}
+                        >
+                          WHO IS THE MURDERER?
+                        </div>
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr 1fr",
+                            columnGap: "15px",
+                            rowGap: "10px",
+                          }}
+                        >
+                          {suspectNames.map((suspect) => (
+                            <button
+                              key={suspect}
+                              className="suspect-button"
+                              style={{
+                                backgroundColor:
+                                  suspect === "chris"
+                                    ? "rgb(236, 224, 121)"
+                                    : suspect === "jason"
+                                    ? "rgb(139, 216, 239)"
+                                    : suspect === "kate"
+                                    ? "rgb(190, 190, 190)"
+                                    : suspect === "poppy"
+                                    ? "rgb(119, 207, 136)"
+                                    : suspect === "violet"
+                                    ? "rgb(171, 121, 236)"
+                                    : "rgb(238, 142, 216)",
+                                color: "black",
+                                borderColor:
+                                  suspect === "chris"
+                                    ? "rgb(255, 196, 0)"
+                                    : suspect === "jason"
+                                    ? "rgb(2, 3, 80)"
+                                    : suspect === "kate"
+                                    ? "rgb(73, 73, 73)"
+                                    : suspect === "poppy"
+                                    ? "rgb(27, 120, 38)"
+                                    : suspect === "violet"
+                                    ? "rgb(77, 2, 138)"
+                                    : "rgb(203, 0, 132)",
+                                opacity: verifiedSuspects.has(suspect)
+                                  ? 0.5
+                                  : 1,
+                                cursor: verifiedSuspects.has(suspect)
+                                  ? "not-allowed"
+                                  : "pointer",
+                              }}
+                              onClick={() => {
+                                if (!verifiedSuspects.has(suspect)) {
+                                  setSelectedSuspect(suspect);
+                                  setDialogueIndex(0);
+                                  verifyAlibi(suspect);
+                                }
+                              }}
+                              disabled={verifiedSuspects.has(suspect)}
+                            >
+                              {suspect.toUpperCase()}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
+
+                <div
+                  style={{
+                    borderTop: "dashed 2px white",
+                    position: "relative",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "100%",
+                      textShadow: "2px 2px 1px rgb(14, 42, 121)",
+                      fontFamily: "'Press Start 2P'",
+                      fontSize: "15px",
+                      padding: "1rem",
+                      color: "white",
+                    }}
+                  >
+                    AND THE WEAPON?
+                  </div>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr 1fr",
+                      columnGap: "15px",
+                      rowGap: "10px",
+                      padding: "0 4rem",
+                      position: "absolute",
+                      top: "20%",
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                    }}
+                  >
+                    {weaponNames.map((weapon) => (
+                      <button
+                        key={weapon}
+                        className="suspect-button"
+                        style={{
+                          opacity: verifiedSuspects.has(weapon) ? 0.5 : 1,
+                          cursor: verifiedSuspects.has(weapon)
+                            ? "not-allowed"
+                            : "pointer",
+                        }}
+                        onClick={() => {
+                          if (!verifiedSuspects.has(suspect)) {
+                            setSelectedSuspect(suspect);
+                            setDialogueIndex(0);
+                            verifyAlibi(suspect);
+                          }
+                        }}
+                        disabled={verifiedSuspects.has(suspect)}
+                      >
+                        {suspect.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {showDialogue && (
+                  <p className="detective-dialogue-box">
+                    {currentDialogue[dialogueIndex].text}
+                  </p>
+                )}
+
+                {showDialogue &&
+                  dialogueIndex === currentDialogue.length - 1 && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        position: "absolute",
+                        top: "73%",
+                        zIndex: "1400",
+                        left: "8%",
+                      }}
+                    >
+                      <button
+                        className="next-button"
+                        style={{
+                          backgroundColor: "transparent",
+                          border: "none",
+                        }}
+                        onClick={() => {
+                          setShowDialogue(false);
+                          setDialogueIndex(0);
+                          setSelectedSuspect("");
+                        }}
+                      >
+                        <img
+                          src={left}
+                          style={{ width: "8%" }}
+                          alt="Left Arrow"
+                        />
+                        <div
+                          className="warning"
+                          style={{
+                            margin: 0,
+                            width: "155px",
+                            textShadow: "2px 2px 2px grey",
+                          }}
+                        >
+                          CHANGE SUSPECT
+                        </div>
+                      </button>
+                    </div>
+                  )}
+
+                {!showDialogue &&
+                  verifiedSuspects.size === suspectNames.length && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        position: "absolute",
+                        top: "73%",
+                        zIndex: "1400",
+                        left: "8%",
+                      }}
+                    >
+                      <img
+                        src={down}
+                        style={{ width: "8%" }}
+                        alt="Down Arrow"
+                      />
+                      <div
+                        className="warning"
+                        style={{
+                          margin: 0,
+                          width: "155px",
+                          textShadow: "2px 2px 2px grey",
+                        }}
+                      >
+                        PROCEED TO NEXT STAGE
+                      </div>
+                    </div>
+                  )}
               </div>
             </div>
           </div>
         )}
       </div>
 
+      {/* Game Over Screen */}
       {timeLeft <= 0 && (
         <div className={`fade-container ${fadeOut ? "fade-out" : ""}`}>
           <div style={{ textAlign: "center", color: "white" }}>
@@ -1270,6 +1814,7 @@ function GamePlay() {
         </div>
       )}
 
+      {/* Suspect Cards Overlay */}
       {suspectsOpen && (
         <>
           <div className="overlay" onClick={() => setSuspectsOpen(false)} />
@@ -1278,20 +1823,27 @@ function GamePlay() {
               className="card"
               style={{
                 backgroundImage: `url(${suspect_cards[currentSuspectIndex].image})`,
-             
-             
               }}
             />
-            <button onClick={prevSuspect} className="arrow" style={{ left: "20%" }}>
+            <button
+              onClick={prevSuspect}
+              className="arrow"
+              style={{ left: "20%" }}
+            >
               ❮
             </button>
-            <button onClick={nextSuspect} className="arrow" style={{ right: "20%" }}>
+            <button
+              onClick={nextSuspect}
+              className="arrow"
+              style={{ right: "20%" }}
+            >
               ❯
             </button>
           </div>
         </>
       )}
 
+      {/* Weapon Cards Overlay */}
       {weaponsOpen && (
         <>
           <div className="overlay" onClick={() => setWeaponsOpen(false)} />
@@ -1302,10 +1854,18 @@ function GamePlay() {
                 backgroundImage: `url(${weapon_cards[currentWeapon].image})`,
               }}
             />
-            <button onClick={prevWeapon} className="arrow" style={{ left: "20%" }}>
+            <button
+              onClick={prevWeapon}
+              className="arrow"
+              style={{ left: "20%" }}
+            >
               ❮
             </button>
-            <button onClick={nextWeapon} className="arrow" style={{ right: "20%" }}>
+            <button
+              onClick={nextWeapon}
+              className="arrow"
+              style={{ right: "20%" }}
+            >
               ❯
             </button>
           </div>
