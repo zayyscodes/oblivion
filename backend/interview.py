@@ -5,8 +5,7 @@ import uuid
 from data import suspects, weapons, get_suspect_clues, get_weapon_clues
 
 app = Flask(__name__)
-CORS(app)
-
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
 # Map frontend suspect names to backend names
 SUSPECT_NAME_MAPPING = {
     "chris": "Chris Blaine",
@@ -33,7 +32,6 @@ game_state = {
     'fake_locations': {},
     'lie_counter': {},
     'liars': [],
-    'suspect_statements': {},
     'alibi_claims': {},
     'checked_suspects': set(),
     'valid_suspects_csp': [],
@@ -113,8 +111,8 @@ def generate_suspect_dialogues():
     dialogues = {}
     for name, data in suspects.items():
         frontend_name = REVERSE_SUSPECT_MAPPING.get(name.lower(), name.lower())
-        location_to_show = game_state['fake_locations'].get(name, data['location'])
-        
+        location_to_show = game_state['fake_locations'].get(name, data['location']).lower()
+
         occupation_quips = {
             "CEO": "Tall, dark, and suspicious, huh? You forgot charming.",
             "Singer": "Don’t worry, detective, I only kill with high notes.",
@@ -125,76 +123,119 @@ def generate_suspect_dialogues():
         }
         occupation_response = occupation_quips.get(data['occupation'], "I guess I’m more than my profile, detective.")
 
-        motive_probes = {
-            "Financial": "Maybe she knew something about your... offshore accounts?",
-            "Romantic": "Maybe you got jealous seeing her with someone else?",
-            "Revenge": "Or maybe you were still angry about how she handled the divorce.",
-            "Competition": "Or maybe you thought she was about to outshine you in the industry?",
-            "Jealousy": "Maybe jealousy turned darker than you admit?",
-            "Inheritance": "Or maybe she rejected your latest manuscript and you snapped?"
-        }
-        motive_probe = motive_probes.get(data['motive'], "Maybe you had a hidden reason to get rid of her?")
-
-        motive_responses = {
-            "Financial": "Scoff-worthy, detective. If I were hiding skeletons, they’d be better dressed.",
-            "Romantic": "*Concerned look* That’s a painful thought—but no. She moved on, and I respected that.",
-            "Revenge": "*Sighs* I’m not proud of everything, but anger doesn’t equal murder.",
-            "Competition": "*Scoffs* She was good—but there’s room on the runway for two.",
-            "Jealousy": "*Nervous* Jealous? Sure. But murderous? That’s a leap, detective.",
-            "Inheritance": "*Nervously chuckles* Wow. That’s dark—even for me. No, she was my best critic."
-        }
-        motive_response = motive_responses.get(data['motive'], "That’s a stretch, detective. I had no reason to harm her.")
-
         alibi_responses = {
-            "library": f"In the {location_to_show} reading quarterly reports. Boring stuff, not murder-worthy.",
-            "home": f"Home alone, writing breakup songs. Romantic fallout makes good lyrics, not crime scenes.",
-            "studio": f"I was in my {location_to_show}, reviewing mortgage portfolios. Riveting work, truly.",
-            "flower shop": f"At the {location_to_show} rehearsing poses for a brand shoot. I kill looks, not people.",
-            "gallery": f"At the {location_to_show} arranging a floral display. You can ask the curator, if she's not busy admiring her own ego.",
-            "library": f"In the {location_to_show}. Writing, researching, deleting whole paragraphs. A killer of words, maybe."
+            "library": {
+                "chris": "In the library reading quarterly reports—business doesn’t sleep, detective.",
+                "jason": "At the library, browsing music history books for inspiration.",
+                "kate": "I was in the library reviewing investment journals.",
+                "poppy": "In the library, flipping through fashion magazines for shoot ideas.",
+                "violet": "In the library, researching rare flower species.",
+                "zehab": "At the library, buried in gothic novels for my next story."
+            },
+            "home": {
+                "chris": "Home alone, reviewing company contracts—thrilling stuff.",
+                "jason": "Home alone, writing breakup songs. The usual.",
+                "kate": "At home, balancing my personal accounts.",
+                "poppy": "Home alone, practicing poses for a shoot. It’s all about the angles.",
+                "violet": "At home, arranging a new bouquet for my shop.",
+                "zehab": "Home alone, drafting a new chapter."
+            },
+            "studio": {
+                "chris": "In my studio, preparing for a board meeting. PowerPoint is my alibi.",
+                "jason": "At the studio, recording a new track. The mic was my only witness.",
+                "kate": "In the studio, reviewing mortgage portfolios. Numbers don’t lie.",
+                "poppy": "At the studio, testing lighting for a photoshoot. Glam takes work.",
+                "violet": "In the studio, sketching floral designs for a client.",
+                "zehab": "At the studio, editing my manuscript. Words are stubborn."
+            },
+            "flower shop": {
+                "chris": "At the flower shop, negotiating a corporate event deal. Even CEOs need decor.",
+                "jason": "In the flower shop, picking roses for a music video. It’s aesthetic.",
+                "kate": "At the flower shop, buying a gift for a client. Business is personal.",
+                "poppy": "At the flower shop, scouting props for a fashion shoot. Flowers sell the vibe.",
+                "violet": "In my flower shop, preparing orders. Petals don’t arrange themselves.",
+                "zehab": "At the flower shop, observing people for character inspiration."
+            },
+            "gallery": {
+                "chris": "At the gallery, schmoozing investors. Art’s just business in disguise.",
+                "jason": "In the gallery, soaking up visuals for my next album cover.",
+                "kate": "At the gallery, eyeing art for my office. Taste is an investment.",
+                "poppy": "At the gallery, studying poses in portraits. Art inspires fashion.",
+                "violet": "In the gallery, delivering floral arrangements for an exhibit.",
+                "zehab": "At the gallery, sketching scenes for my novel’s setting."
+            },
+            "office": {
+                "chris": "In my office, closing a deal. The only thing I killed was the competition.",
+                "jason": "At the office, meeting my manager about a tour. Paperwork, not murder.",
+                "kate": "In my office, finalizing a loan deal. My desk is my alibi.",
+                "poppy": "At the office, shooting a campaign ad. Cameras were rolling.",
+                "violet": "In the office, delivering a floral order for a meeting.",
+                "zehab": "At the office, interviewing a source for my next book."
+            }
         }
-        alibi_response = alibi_responses.get(location_to_show.lower(), f"I was at the {location_to_show}, doing my usual work.")
+        alibi_response = alibi_responses.get(location_to_show, {}).get(frontend_name, f"I was at the {location_to_show}, doing my usual work.")
 
         alibi_followups = {
-            "library": "Books over boardrooms, huh? Odd for a CEO with a reputation for late-night deals.",
-            "home": "A lonely night, no witnesses. Convenient for more than just heartbreak.",
-            "studio": "Nothing says 'I didn’t do it' like subprime lending, huh?",
-            "flower shop": "You do have killer heels. Could’ve stomped out more than a photoshoot.",
-            "gallery": "That ego may just save you, if she confirms your story.",
-            "library": "The library seems popular. Funny how killers and creatives share locations."
+            "library": "The library seems popular. Funny how killers and scholars share spaces.",
+            "home": "A lonely night, no witnesses. Convenient for more than just solitude.",
+            "studio": "Studio time, huh? Sounds like a perfect cover for darker work.",
+            "flower shop": "Flower shop’s a sweet alibi. Too bad petals can hide thorns.",
+            "gallery": "Galleries attract all types. Even those with blood on their hands.",
+            "office": "An office alibi? Desks don’t talk, and deals can mask motives."
         }
-        alibi_followup = alibi_followups.get(location_to_show.lower(), "That sounds convenient—too convenient, maybe.")
+        alibi_followup = alibi_followups.get(location_to_show, "That sounds convenient—too convenient, maybe.")
 
         alibi_rebuttals = {
-            "library": "Even CEOs get tired of spreadsheets. It was a quiet night.",
-            "home": "Songs don’t write themselves, detective. I have timestamped drafts.",
-            "studio": "Well, I have buried people in paperwork. That’s the only crime I’m guilty of.",
-            "flower shop": "*Raises brow* You think I’d ruin my manicure for murder? Please.",
-            "gallery": "Believe me, if I were to kill anyone, it wouldn’t be the victim—it’d be her.",
-            "library": "Coincidence is the backbone of mystery, detective. You should know."
+            "library": {
+                "chris": "Reports don’t read themselves. I was neck-deep in numbers.",
+                "jason": "Music history’s my vibe. No crime in chasing inspiration.",
+                "kate": "Journals keep me sharp. Murder’s not my kind of transaction.",
+                "poppy": "Fashion mags are my homework. I was planning my next look.",
+                "violet": "Rare flowers fascinate me. That’s my only obsession.",
+                "zehab": "Gothic novels fuel my work. I’m guilty of bad plots, not murder."
+            },
+            "home": {
+                "chris": "Contracts are my nightlife. No time for crime.",
+                "jason": "Songs don’t write themselves. I’ve got drafts to prove it.",
+                "kate": "My accounts are cleaner than your theories, detective.",
+                "poppy": "Posing practice is my cardio. No drama, just mirrors.",
+                "violet": "Bouquets keep me busy. I’m not plotting murders.",
+                "zehab": "My chapters don’t kill people. They just bore them."
+            },
+            "studio": {
+                "chris": "Board meetings need prep. My slides are my alibi.",
+                "jason": "Studio tracks don’t lie. Check the recordings.",
+                "kate": "Portfolios are my life. No room for murder plots.",
+                "poppy": "Lighting tests take hours. I was glowing, not scheming.",
+                "violet": "Floral sketches are my art. No blood on my pencils.",
+                "zehab": "Editing’s my crime. Words, not people, suffer."
+            },
+            "flower shop": {
+                "chris": "Event deals are my game. Flowers were just props.",
+                "jason": "Roses set the mood. My video’s proof enough.",
+                "kate": "Client gifts build trust. Murder’s bad for business.",
+                "poppy": "Props make the shoot. I was styling, not stabbing.",
+                "violet": "Orders don’t wait. My shop’s my world.",
+                "zehab": "People-watching’s my research. No sinister motives."
+            },
+            "gallery": {
+                "chris": "Investors love art talk. My night was profit, not pain.",
+                "jason": "Album visuals need spark. I was dreaming, not killing.",
+                "kate": "Art’s a smart buy. My motives are financial, not fatal.",
+                "poppy": "Portraits teach poise. I was studying, not slaying.",
+                "violet": "Exhibits need flowers. I was decorating, not destroying.",
+                "zehab": "Sketches inspire my work. No crimes in my notebook."
+            },
+            "office": {
+                "chris": "Deals don’t close themselves. My office is my fortress.",
+                "jason": "Tour plans are hectic. My manager can vouch.",
+                "kate": "Loans don’t sign themselves. My desk’s my witness.",
+                "poppy": "Ad shoots are chaotic. Cameras caught my every move.",
+                "violet": "Floral orders don’t deliver themselves. I was working.",
+                "zehab": "Interviews fuel my stories. No murders in my notes."
+            }
         }
-        alibi_rebuttal = alibi_rebuttals.get(location_to_show.lower(), "I assure you, detective, my night was uneventful.")
-
-        motive_explanations_1 = {
-            "Financial": "Because I respected her. She left the company on her own terms. No lawsuit, no bad blood.",
-            "Romantic": "Because I loved her. Even after the breakup.",
-            "Revenge": "Because I’ve already lost her once. Divorce was painful enough.",
-            "Competition": "We worked together. She was competitive, sure, but we laughed between takes.",
-            "Jealousy": "We’ve known each other since braces and breakouts. She was the maid of honor at my wedding.",
-            "Inheritance": "She was my sister. Not by blood, but she still read my drafts, told me when my prose sucked."
-        }
-        motive_explanation_1 = motive_explanations_1.get(data['motive'], "I had no reason to harm her. We were on good terms.")
-
-        motive_explanations_2 = {
-            "Financial": "She was sharp—I even offered her a return package once.",
-            "Romantic": "I wrote her into every song, even the sad ones. She was... unforgettable.",
-            "Revenge": "We were civil after everything. I had no reason to hurt her.",
-            "Competition": "She gave me posing tips. You don’t kill people who help you shine.",
-            "Jealousy": "I may have wanted to throttle her sometimes—but kill her? Never.",
-            "Inheritance": "We fought like siblings do, but family is family."
-        }
-        motive_explanation_2 = motive_explanations_2.get(data['motive'], "She was a part of my life, detective. I wouldn’t hurt her.")
-
+        alibi_rebuttal = alibi_rebuttals.get(location_to_show, {}).get(frontend_name, "I assure you, detective, my night was uneventful.")
         dialogue = [
             {
                 "id": "intro",
@@ -234,12 +275,10 @@ def generate_suspect_dialogues():
             {
                 "id": "alibi",
                 "char": "detective",
-                "text": motive_probe
             },
             {
                 "id": "alibi",
                 "char": frontend_name,
-                "text": motive_response
             },
             {
                 "id": "motive",
@@ -249,14 +288,19 @@ def generate_suspect_dialogues():
             {
                 "id": "motive",
                 "char": frontend_name,
-                "text": motive_explanation_1
             },
             {
                 "id": "motive",
                 "char": frontend_name,
-                "text": motive_explanation_2
             }
         ]
+        # Add Kate's extra intro line
+        if name == "Kate Ivory":
+            dialogue.insert(2, {
+                "id": "intro",
+                "char": frontend_name,
+                "text": "Hope this interview doesn’t come with hidden charges."
+            })
         dialogues[frontend_name] = dialogue
     return dialogues
 
@@ -269,7 +313,6 @@ def start_game():
     game_state['fake_locations'] = {}
     game_state['lie_counter'] = {name: 0 for name in suspects}
     game_state['liars'] = []
-    game_state['suspect_statements'] = {}
     game_state['alibi_claims'] = {}
     game_state['checked_suspects'] = set()
     game_state['valid_suspects_csp'] = []
