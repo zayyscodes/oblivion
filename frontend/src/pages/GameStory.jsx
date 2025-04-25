@@ -267,7 +267,7 @@ function GameStory() {
                   fontSize: "30px",
                 }}
               >
-                THREE LIVES. FIVE MINUTES.
+                THREE LIVES. THREE MINUTES.
               </div>
             </>
           )}
