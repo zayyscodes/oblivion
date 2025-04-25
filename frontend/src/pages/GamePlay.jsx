@@ -77,6 +77,9 @@ function GamePlay() {
   const [selectedWeapon, setSelectedWeapon] = useState("");
   const [triesLeft, setTriesLeft] = useState(3);
   const [guessResult, setGuessResult] = useState(null);
+  const [alibisOpen, setAlibisOpen] = useState(false); 
+  const [alibiResults, setAlibiResults] = useState({});
+
 
   console.log("Current step state:", step);
 
@@ -113,6 +116,7 @@ function GamePlay() {
     try {
       // Reset verifiedSuspects for a new game
       setVerifiedSuspects(new Set());
+      setAlibiResults({});
       console.log("Reset verifiedSuspects on new game");
       const options = {
         method: "POST",
@@ -386,6 +390,17 @@ function GamePlay() {
         console.log(`Updated verifiedSuspects:`, Array.from(newSet));
         return newSet;
       });
+
+      
+      // Store alibi result
+      setAlibiResults((prev) => ({
+        ...prev,
+        [suspectName]: {
+          isValid: data.verification.is_alibi_valid,
+          claimedLocation: data.verification.claimed_location,
+          actualLocation: data.verification.actual_location,
+        },
+      }));
       
       const stage4 = buildStage4(data);
       setStage4Dialogues(stage4);
@@ -1759,6 +1774,13 @@ function GamePlay() {
                   SUSPECTS
                 </button>
 
+                <button
+                  className="analyse-buttons"
+                  onClick={() => setAlibisOpen(true)}
+                >
+                  ALIBIS
+                </button>
+
                 {finalDeductionData && finalDeductionData.top_suspects && (
                   <div className="suggestions" style={{ marginLeft: "2px" }}>
                     <label className="suggestion-label">PiP SUGGESTS</label>
@@ -2036,7 +2058,68 @@ function GamePlay() {
           </div>
         </>
       )}
-    </div>
+
+{alibisOpen && (
+        <>
+          <div className="overlay" onClick={() => setAlibisOpen(false)} />
+          <div className="alibis-container">
+            <h2 className="alibis-title">ALIBI VERIFICATION STATUS</h2>
+            {suspectNames.length > 0 ? (
+              suspectNames.map((suspect) => (
+                <div
+                  key={suspect}
+                  className="alibi-item"
+                  style={{
+                    backgroundColor:
+                      suspect === "chris"
+                        ? "rgba(236, 224, 121, 0.8)"
+                        : suspect === "jason"
+                        ? "rgba(139, 216, 239, 0.8)"
+                        : suspect === "kate"
+                        ? "rgba(190, 190, 190, 0.8)"
+                        : suspect === "poppy"
+                        ? "rgba(119, 207, 136, 0.8)"
+                        : suspect === "violet"
+                        ? "rgba(171, 121, 236, 0.8)"
+                        : "rgba(238, 142, 216, 0.8)",
+                    borderColor:
+                      suspect === "chris"
+                        ? "rgb(255, 196, 0)"
+                        : suspect === "jason"
+                        ? "rgb(2, 3, 80)"
+                        : suspect === "kate"
+                        ? "rgb(73, 73, 73)"
+                        : suspect === "poppy"
+                        ? "rgb(27, 120, 38)"
+                        : suspect === "violet"
+                        ? "rgb(77, 2, 138)"
+                        : "rgb(203, 0, 132)",
+                  }}
+                >
+                  <p className="alibi-text">
+                    {suspect.toUpperCase()}:{" "}
+                    {alibiResults[suspect] ? (
+                      <>
+                        {alibiResults[suspect].isValid ? (
+                          <span className="alibi-valid">Valid</span>
+                        ) : (
+                          <span className="alibi-invalid">Invalid</span>
+                        )}{" "}
+                        (Claimed: {alibiResults[suspect].claimedLocation || "N/A"})
+                      </>
+                    ) : (
+                      <span className="alibi-not-verified">Not Verified</span>
+                    )}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="alibi-text">No suspects available.</p>
+            )}
+          </div>
+        </>
+      )}
+      </div>
   );
 }
 
