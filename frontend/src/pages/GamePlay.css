@@ -271,6 +271,56 @@
   margin-bottom: 1rem;
 }
 
+.alibis-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(300px, 50%, 600px);
+  background-color: rgba(251, 240, 216, 0.9);
+  border: dashed 4px rgb(19, 2, 101);
+  padding: 20px;
+  z-index: 2000;
+  text-align: center;
+}
+
+.alibis-title {
+  font-family: "Press Start 2P";
+  font-size: clamp(16px, 2vw, 20px);
+  color: rgb(18, 2, 96);
+  margin-bottom: 20px;
+}
+
+.alibi-item {
+  margin: 10px 0;
+  padding: 10px;
+  border: dashed 3px;
+  border-radius: 10px;
+}
+
+.alibi-text {
+  font-family: "Press Start 2P";
+  font-size: clamp(12px, 1.2vw, 14px);
+  color: rgb(18, 2, 96);
+  margin: 0;
+}
+
+.alibi-valid {
+  color: green;
+  font-weight: bold;
+}
+
+.alibi-invalid {
+  color: red;
+  font-weight: bold;
+}
+
+.alibi-not-verified {
+  color: gray;
+  font-style: italic;
+}
+
+
 .suggestions {
   background-color: rgb(5, 26, 56);
   border: dashed 3px rgb(142, 196, 212);
