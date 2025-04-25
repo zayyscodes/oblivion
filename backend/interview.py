@@ -13,7 +13,7 @@ SUSPECT_NAME_MAPPING = {
     "kate": "Kate Ivory",
     "poppy": "Poppy Green",
     "violet": "Violet Riley",
-    "zehab": "Zehab Rose"
+    "zehab": "Zehab Rose",
 }
 REVERSE_SUSPECT_MAPPING = {v.lower(): k for k, v in SUSPECT_NAME_MAPPING.items()}
 WEAPON_NAME_MAPPING = {
@@ -74,6 +74,14 @@ def evaluate_motive_opportunity(suspect_name, weapon, room, fake_locations):
     motive_score = 0.1 if suspect['motive'].lower() in ['revenge', 'jealousy', 'inheritance'] else 0.05
     opportunity_score = 0.1 if fake_locations.get(suspect_name, suspect['location']) == room else 0.0
     return motive_score + opportunity_score
+
+def generate_killer_clue(killer_name):
+    suspect_data = suspects.get(killer_name)
+    if not suspect_data:
+        print(f"Error: No data found for killer {killer_name}")
+        return "No additional clues available."
+    clues = get_suspect_clues(suspect_data)
+    return random.choice(clues) if clues else "No additional clues available."
 
 # --- RL Setup ---
 learning_rate = 0.1
@@ -316,6 +324,7 @@ def start_game():
     game_state['alibi_claims'] = {}
     game_state['checked_suspects'] = set()
     game_state['valid_suspects_csp'] = []
+    game_state['guess_count'] = 0
 
     for name in suspects:
         suspects[name]['probability'] = 0.5 if name == game_state['killer_name'] else suspects[name].get('probability', 0.3)
@@ -399,6 +408,61 @@ def round2_alibis():
     return jsonify({
         'status': 'success',
         'alibi_claims': {REVERSE_SUSPECT_MAPPING.get(name.lower(), name): claims for name, claims in game_state['alibi_claims'].items()}
+    })
+
+@app.route('/api/round3_get_suggestion', methods=['GET'])
+def round3_get_suggestion():
+    if game_state['game_id'] is None:
+        return jsonify({
+            'status': 'error',
+            'message': 'No active game. Please start a game using /api/start_game.'
+        }), 400
+
+    game_id = request.args.get('game_id')
+    if not game_id or game_id != game_state['game_id']:
+        return jsonify({
+            'status': 'error',
+            'message': 'Invalid or missing game_id. Please provide the correct game_id.'
+        }), 400
+
+    # Count mentions, weighting non-liars higher
+    mention_counts = {name: 0 for name in suspects.keys()}
+    for accuser, claims in game_state['alibi_claims'].items():
+        weight = 1.5 if accuser not in game_state['liars'] else 1.0  # Non-liars are more reliable
+        for target in claims.keys():
+            mention_counts[target] += weight
+
+    # Find unchecked suspects
+    unchecked_suspects = [
+        name for name in suspects.keys() if name not in game_state['checked_suspects']
+    ]
+
+    if not unchecked_suspects:
+        print("No unchecked suspects, returning None")
+        return jsonify({
+            'status': 'success',
+            'most_suspected_suggestion': None,
+            'message': 'All suspects have been verified.'
+        })
+
+    # Calculate scores: mention count + probability + killer bias
+    scores = {}
+    killer_name = game_state['killer_name']
+    for name in unchecked_suspects:
+        score = mention_counts[name] + suspects[name]['probability'] * 10  # Scale probability for impact
+        if name == killer_name:
+            score += 2.0  # Small bias toward true killer
+        scores[name] = score
+
+    # Select suspect with highest score
+    most_suspected = max(scores, key=scores.get)
+    frontend_name = REVERSE_SUSPECT_MAPPING.get(most_suspected.lower(), most_suspected)
+    print(f"True killer: {killer_name}, Suggested: {frontend_name}, Scores: {scores}")
+
+    return jsonify({
+        'status': 'success',
+        'most_suspected_suggestion': frontend_name,
+        'message': f'Suggested suspect: {frontend_name}'
     })
 
 @app.route('/api/round3_verify_alibi', methods=['POST'])
@@ -511,13 +575,16 @@ def round4_final_deduction():
     crime_scene = suspects[game_state['killer_name']]['location']
     for name, data in suspects.items():
         boost = evaluate_motive_opportunity(name, game_state['killer_weapon'], crime_scene, game_state['fake_locations'])
+        # Slightly higher boost for true killer
+        if name == game_state['killer_name']:
+            boost += 0.1
         suspects[name]['probability'] = min(1, suspects[name]['probability'] + boost)
 
     normalize_probabilities()
     valid_suspects_csp = solve_with_csp()
 
     scored_suspects = [
-        (name, data['probability'] + (0.3 if name in valid_suspects_csp else 0))
+        (name, data['probability'] + (0.3 if name in valid_suspects_csp else 0) + (0.2 if name == game_state['killer_name'] else 0))
         for name, data in suspects.items()
     ]
     sorted_suspects = sorted(scored_suspects, key=lambda x: x[1], reverse=True)
@@ -530,6 +597,8 @@ def round4_final_deduction():
     ]
 
     weapon_clue = random.choice(get_weapon_clues(game_state['killer_weapon']))
+    print(f"True killer: {game_state['killer_name']}, Top suspects: {[s['name'] for s in top_suspects]}")
+
     return jsonify({
         'status': 'success',
         'top_suspects': top_suspects,
@@ -541,90 +610,100 @@ def round4_final_deduction():
 def make_guess():
     try:
         data = request.get_json()
-        if not isinstance(data, dict):
+        guess_suspect = data.get('suspect')
+        guess_weapon = data.get('weapon')
+        game_id = data.get('game_id')
+        
+        # Validate inputs
+        if not guess_suspect or not guess_weapon:
             return jsonify({
                 'status': 'error',
-                'message': 'Invalid JSON data. Must be a JSON object.'
+                'message': 'Missing suspect or weapon in guess.'
             }), 400
-
-        killer_key = 'killer_name' if 'killer_name' in data else 'killer'
-        weapon_key = 'weapon' if 'weapon' in data else 'guess_weapon'
-        if killer_key not in data or weapon_key not in data or 'tries_left' not in data:
+        if not game_id or game_id != game_state['game_id']:
             return jsonify({
                 'status': 'error',
-                'message': 'Missing required fields. Must include "killer_name" (or "killer"), "weapon" (or "guess_weapon"), and "tries_left".'
+                'message': 'Invalid or missing game_id.'
             }), 400
-
-        guess_killer = data[killer_key]
-        guess_weapon = data[weapon_key]
-        tries_left = data['tries_left']
-
-        if not isinstance(tries_left, int) or tries_left < 1 or tries_left > 3:
+        if game_state['game_id'] is None:
             return jsonify({
                 'status': 'error',
-                'message': 'Invalid tries_left. Must be an integer between 1 and 3.'
+                'message': 'No active game. Please start a game using /api/start_game.'
             }), 400
 
-        if guess_killer.lower() in SUSPECT_NAME_MAPPING:
-            guess_killer = SUSPECT_NAME_MAPPING[guess_killer.lower()]
-        if guess_weapon.lower() in WEAPON_NAME_MAPPING:
-            guess_weapon = WEAPON_NAME_MAPPING[guess_weapon.lower()]
-
-        valid_killers = {name.lower(): name for name in suspects.keys()}
-        valid_weapons = {w.lower(): w for w in weapons.values()}
-        if guess_killer.lower() not in valid_killers or guess_weapon.lower() not in valid_weapons:
+        # Map frontend names to backend
+        backend_suspect = SUSPECT_NAME_MAPPING.get(guess_suspect.lower(), guess_suspect)
+        backend_weapon = WEAPON_NAME_MAPPING.get(guess_weapon.lower(), guess_weapon)
+        
+        # Validate suspect and weapon
+        if backend_suspect not in suspects:
             return jsonify({
                 'status': 'error',
-                'message': f'Invalid killer_name or weapon. Valid killers: {list(valid_killers.values())}, Valid weapons: {list(valid_weapons.values())}'
+                'message': f'Invalid suspect name: {guess_suspect}.'
+            }), 400
+        if backend_weapon not in weapons.values():
+            return jsonify({
+                'status': 'error',
+                'message': f'Invalid weapon name: {guess_weapon}.'
             }), 400
 
-        guess_killer = valid_killers[guess_killer.lower()]
-        guess_weapon = valid_weapons[guess_weapon.lower()]
+        guess_count = game_state.get('guess_count', 0) + 1
+        game_state['guess_count'] = guess_count
+        remaining_tries = 3 - guess_count
 
-        if guess_killer == game_state['killer_name'] and guess_weapon == game_state['killer_weapon']:
+        # Check if guess is correct
+        if backend_suspect == game_state['killer_name'] and backend_weapon == game_state['killer_weapon']:
             return jsonify({
                 'status': 'success',
-                'correct': True,
-                'message': 'Correct! You solved the mystery!'
+                'message': 'Correct guess! You solved the case.',
+                'is_correct': True,
+                'remaining_tries': remaining_tries
             })
 
-        tries_left -= 1
-        if tries_left == 0:
+        # Handle incorrect guess
+        killer_clue = generate_killer_clue(game_state['killer_name'])
+        weapon_clue = random.choice(get_weapon_clues(game_state['killer_weapon']))
+
+        # Update probability for the guessed suspect
+        suspect_data = suspects[backend_suspect]
+        evidence = get_suspect_clues(suspect_data)
+        lie_probability = suspect_data['lie_probability']
+        suspects[backend_suspect]['probability'] = update_probability(
+            suspect_data,
+            evidence,
+            lie_probability,
+            killer_clue=killer_clue,
+            weapon_clue=weapon_clue,
+            suspect_name=backend_suspect
+        )
+        normalize_probabilities()
+
+        # Check if tries are exhausted
+        if remaining_tries <= 0:
             return jsonify({
                 'status': 'game_over',
-                'correct': False,
-                'message': f"You've used all your guesses! The killer was {game_state['killer_name']} using {game_state['killer_weapon']}."
+                'message': f'No tries left! Game over. The killer was {game_state["killer_name"]} with the {game_state["killer_weapon"]}.',
+                'is_correct': False,
+                'killer_clue': killer_clue,
+                'weapon_clue': weapon_clue,
+                'remaining_tries': 0
             })
-
-        killer_clue = random.choice(get_suspect_clues(suspects[game_state['killer_name']]))
-        weapon_clue = random.choice(get_weapon_clues(game_state['killer_weapon']))
-        if game_state['update_probabilities_on_guess']:
-            for name in suspects:
-                if name.lower() == guess_killer.lower():
-                    suspects[name]['probability'] = 0.0
-                else:
-                    suspects[name]['probability'] = update_probability(
-                        suspects[name], get_suspect_clues(suspects[name]),
-                        suspects[name]['lie_probability'], killer_clue, weapon_clue, suspect_name=name
-                    )
-            normalize_probabilities()
 
         return jsonify({
             'status': 'incorrect',
-            'correct': False,
-            'tries_left': tries_left,
+            'is_correct': False,
             'killer_clue': killer_clue,
             'weapon_clue': weapon_clue,
-            'current_probabilities': {REVERSE_SUSPECT_MAPPING.get(name.lower(), name): round(data['probability'], 2) for name, data in suspects.items()},
-            'hint': 'Probabilities updated based on your guess and clues. Focus on suspects with higher probabilities.'
+            'remaining_tries': remaining_tries
         })
 
     except Exception as e:
+        print(f"Error in make_guess: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Invalid JSON data: {str(e)}. Please send valid JSON with Content-Type: application/json.'
-        }), 400
-
+            'message': f'Server error: {str(e)}'
+        }), 500
+    
 @app.route('/api/game_status', methods=['GET'])
 def game_status():
     if game_state['game_id'] is None:
