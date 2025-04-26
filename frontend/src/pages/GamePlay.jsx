@@ -48,8 +48,6 @@ function GamePlay() {
     initialGameId
   );
 
-  
-
   // State
   const [gameId, setGameId] = useState(initialGameId);
   const [step, setStep] = useState(initialGameId ? 1 : 0);
@@ -77,9 +75,12 @@ function GamePlay() {
   const [selectedWeapon, setSelectedWeapon] = useState("");
   const [triesLeft, setTriesLeft] = useState(3);
   const [guessResult, setGuessResult] = useState(null);
-  const [alibisOpen, setAlibisOpen] = useState(false); 
+  const [alibisOpen, setAlibisOpen] = useState(false);
   const [alibiResults, setAlibiResults] = useState({});
-
+  const [showUsernamePrompt, setShowUsernamePrompt] = useState(false);
+  const [username, setUsername] = useState("");
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   console.log("Current step state:", step);
 
@@ -97,6 +98,11 @@ function GamePlay() {
         if (prev <= 1) {
           clearInterval(interval);
           console.log("Time is up! Game Over.");
+          setTimerStarted(false); // Stop the timer
+          // Show username prompt after 3 seconds
+          setTimeout(() => {
+            setShowUsernamePrompt(true);
+          }, 3000);
           return 0;
         }
         return prev - 1;
@@ -294,23 +300,23 @@ function GamePlay() {
           "Content-Type": "application/json",
         },
       });
-  
+
       if (!res.ok) {
         console.log(
           `HTTP error! Status: ${res.status}, Status Text: ${res.statusText}`
         );
         throw new Error(`HTTP error! Status: ${res.status}`);
       }
-  
+
       const data = await res.json();
       console.log("Response from /round3_get_suggestion for AI suggestion:", data);
-  
+
       if (data.status === "error") {
         console.log(`Backend error: ${data.message}`);
         setError(data.message);
         return;
       }
-  
+
       if (!hasSetAiSuggestion) {
         if (data.most_suspected_suggestion) {
           console.log("Backend suggestion:", data.most_suspected_suggestion);
@@ -320,7 +326,7 @@ function GamePlay() {
             (key) => SUSPECT_NAME_MAPPING[key].toLowerCase() === suggestionLower || key === suggestionLower
           );
           console.log("Mapped frontend name:", suggestionFrontendName);
-  
+
           if (suggestionFrontendName) {
             setAiSuggestion(
               `The AI suggests checking ${suggestionFrontendName}'s alibi.`
@@ -349,17 +355,17 @@ function GamePlay() {
         console.error(`No backend mapping for suspect: ${suspectName}`);
         throw new Error(`Invalid suspect name: ${suspectName}`);
       }
-      
+
       // Double-check verifiedSuspects to prevent duplicate verification
       if (verifiedSuspects.has(suspectName)) {
         throw new Error(`Frontend error: ${suspectName} already in verifiedSuspects`);
       }
       console.log(`Verifying alibi for ${suspectName} (backend: ${backendSuspectName}) with gameId: ${gameId}`);
-      
+
       const url = `http://127.0.0.1:5000/api/round3_verify_alibi`;
       const requestBody = JSON.stringify({ suspect_name: backendSuspectName, game_id: gameId });
       console.log(`Sending POST to ${url} with body: ${requestBody}`);
-      
+
       const res = await fetch(url, {
         method: "POST",
         headers: {
@@ -373,7 +379,7 @@ function GamePlay() {
         console.error(`HTTP error for ${suspectName}: Status: ${res.status}, Response: ${errorText}`);
         throw new Error(`HTTP error! Status: ${res.status}, Message: ${errorText || res.statusText}`);
       }
-      
+
       const data = await res.json();
       console.log(`Response from /round3_verify_alibi for ${suspectName}:`, data);
 
@@ -391,7 +397,6 @@ function GamePlay() {
         return newSet;
       });
 
-      
       // Store alibi result
       setAlibiResults((prev) => ({
         ...prev,
@@ -401,12 +406,12 @@ function GamePlay() {
           actualLocation: data.verification.actual_location,
         },
       }));
-      
+
       const stage4 = buildStage4(data);
       setStage4Dialogues(stage4);
       setShowDialogue(true);
       setSelectedSuspect(suspectName); // Ensure selectedSuspect is set
-      
+
       console.log(`Stage 4 dialogues set for ${suspectName}:`, stage4);
 
       // Fetch AI suggestion if not set
@@ -457,73 +462,129 @@ function GamePlay() {
     }
   }, [step]);
 
+  const submitScore = async () => {
+    if (!username.trim()) {
+      setError("Please enter a valid username.");
+      return;
+    }
+
+    try {
+      const totalTime = 180 - timeLeft; // Total time used in seconds
+      const scoreData = {
+        username,
+        time: formatTime(totalTime),
+        tries: 3 - triesLeft,
+      };
+      console.log("Submitting score:", scoreData);
+
+      const res = await fetch("http://127.0.0.1:5001/submit_score", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(scoreData),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to submit score.");
+      }
+
+      const data = await res.json();
+      console.log("Score submission response:", data);
+
+      // Fetch leaderboard
+      const leaderboardRes = await fetch("http://127.0.0.1:5001/leaderboard");
+      if (!leaderboardRes.ok) {
+        throw new Error("Failed to fetch leaderboard.");
+      }
+
+      const leaderboardData = await leaderboardRes.json();
+      console.log("Leaderboard data:", leaderboardData);
+      setLeaderboard(leaderboardData.leaderboard || []);
+      setShowUsernamePrompt(false);
+      setShowLeaderboard(true);
+    } catch (e) {
+      console.error("Error submitting score:", e.message);
+      setError(e.message);
+    }
+  };
+
   const makeGuess = async () => {
     try {
-        if (!suspectNames.includes(selectedSuspect)) {
-            console.error(`Invalid suspect: ${selectedSuspect}`);
-            setError("Please select a valid suspect.");
-            return;
-        }
-        if (!weaponNames.includes(selectedWeapon)) {
-            console.error(`Invalid weapon: ${selectedWeapon}`);
-            setError("Please select a valid weapon.");
-            return;
-        }
+      if (!suspectNames.includes(selectedSuspect)) {
+        console.error(`Invalid suspect: ${selectedSuspect}`);
+        setError("Please select a valid suspect.");
+        return;
+      }
+      if (!weaponNames.includes(selectedWeapon)) {
+        console.error(`Invalid weapon: ${selectedWeapon}`);
+        setError("Please select a valid weapon.");
+        return;
+      }
 
-        const url = `http://127.0.0.1:5000/api/make_guess`;
+      const url = `http://127.0.0.1:5000/api/make_guess`;
+      console.log(
+        `Fetching ${url} with method POST for suspect: ${selectedSuspect}, weapon: ${selectedWeapon}`
+      );
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          suspect: selectedSuspect,
+          weapon: selectedWeapon,
+          game_id: gameId,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => "No response text");
         console.log(
-            `Fetching ${url} with method POST for suspect: ${selectedSuspect}, weapon: ${selectedWeapon}`
+          `HTTP error! Status: ${res.status}, Status Text: ${res.statusText}, Response: ${errorText}`
         );
-        const res = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                suspect: selectedSuspect,
-                weapon: selectedWeapon,
-                game_id: gameId,
-            }),
-        });
-
-        if (!res.ok) {
-            const errorText = await res.text().catch(() => "No response text");
-            console.log(
-                `HTTP error! Status: ${res.status}, Status Text: ${res.statusText}, Response: ${errorText}`
-            );
-            let errorMessage = res.statusText;
-            try {
-                const errorData = JSON.parse(errorText);
-                errorMessage = errorData.message || res.statusText;
-            } catch (parseError) {
-                console.log("Failed to parse error response:", parseError);
-            }
-            throw new Error(`HTTP error! Status: ${res.status}, Message: ${errorMessage}`);
+        let errorMessage = res.statusText;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || res.statusText;
+        } catch (parseError) {
+          console.log("Failed to parse error response:", parseError);
         }
+        throw new Error(`HTTP error! Status: ${res.status}, Message: ${errorMessage}`);
+      }
 
-        const data = await res.json();
-        console.log("Response from /make_guess:", data);
+      const data = await res.json();
+      console.log("Response from /make_guess:", data);
 
-        if (data.status === "error") {
-            console.log(`Backend error: ${data.message}`);
-            setError(data.message);
-            return;
-        }
+      if (data.status === "error") {
+        console.log(`Backend error: ${data.message}`);
+        setError(data.message);
+        return;
+      }
 
-        setGuessResult(data);
-        if (data.status === "success" || data.status === "game_over") {
-            setTriesLeft(data.remaining_tries);
-            setTimeout(() => navigateToHome(), 3000);
-        } else if (data.status === "incorrect") {
-            setTriesLeft(data.remaining_tries);
-            setSelectedSuspect("");
-            setSelectedWeapon("");
-        }
+      setGuessResult(data);
+      setTriesLeft(data.remaining_tries);
+      if (data.status === "success") {
+        setTimerStarted(false); // Stop the timer on correct guess
+        // Show username prompt after 3 seconds
+        setTimeout(() => {
+          setShowUsernamePrompt(true);
+        }, 3000);
+      } else if (data.status === "game_over") {
+        // Show username prompt after 3 seconds
+        setTimeout(() => {
+          setShowUsernamePrompt(true);
+        }, 3000);
+      } else if (data.status === "incorrect") {
+        setSelectedSuspect("");
+        setSelectedWeapon("");
+      }
     } catch (e) {
-        console.log("Fetch error for /make_guess:", e.message);
-        setError(e.message || "Failed to make guess. Please try again.");
+      console.log("Fetch error for /make_guess:", e.message);
+      setError(e.message || "Failed to make guess. Please try again.");
     }
-};
+  };
 
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -860,6 +921,64 @@ function GamePlay() {
       )}
 
       <img src={background} className="background" alt="background" />
+      {showUsernamePrompt && (
+        <>
+          <div className="overlay" />
+          <div className="username-popup">
+            <p
+              className="section-header"
+              style={{ fontSize: "clamp(16px, 2vw, 20px)", margin: "0 0 20px 0" }}
+            >
+              Game Over! Submit Your Score?
+            </p>
+            <input
+              type="text"
+              className="username-input"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Your username"
+            />
+            <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+              <button className="username-submit" onClick={submitScore}>
+                Submit Score
+              </button>
+              <button
+                className="username-submit"
+                style={{ backgroundColor: "#ff4d4d" }}
+                onClick={navigateToHome}
+              >
+                Return to Home
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {showLeaderboard && (
+        <>
+          <div className="overlay" />
+          <div className="leaderboard-container">
+            <p className="leaderboard-title">Leaderboard</p>
+            {leaderboard.length > 0 ? (
+              leaderboard.map((entry, index) => (
+                <div key={index} className="leaderboard-item">
+                  <p className="leaderboard-text">{entry.username}</p>
+                  <p className="leaderboard-text">{entry.score}</p>
+                </div>
+              ))
+            ) : (
+              <p className="leaderboard-text">No scores available.</p>
+            )}
+            <button
+              className="username-submit"
+              style={{ marginTop: "20px" }}
+              onClick={navigateToHome}
+            >
+              Return to Home
+            </button>
+          </div>
+        </>
+      )}
 
       <div className={`fade-container ${fadeOut ? "fade-out" : ""}`}>
         {step === 1 && (
@@ -1805,15 +1924,6 @@ function GamePlay() {
                         SUBMIT GUESS
                       </button>
                     )}
-                  {(guessResult?.status === "success" ||
-                    guessResult?.status === "game_over") && (
-                    <button
-                      className="proceed-buttons"
-                      onClick={navigateToHome}
-                    >
-                      RETURN TO HOME
-                    </button>
-                  )}
                   {guessResult?.status === "incorrect" && (
                     <button
                       className="proceed-buttons"
@@ -1993,13 +2103,7 @@ function GamePlay() {
 
       {timeLeft <= 0 && (
         <div className={`fade-container ${fadeOut ? "fade-out" : ""}`}>
-          <div style={{ textAlign: "center", color: "white" }}>
-            <h1>Game Over</h1>
-            <p>Time's up! You ran out of time to solve the mystery.</p>
-            <button className="proceed-buttons" onClick={navigateToHome}>
-              RETURN TO HOME
-            </button>
-          </div>
+          {/* This section is intentionally left empty as the username prompt is handled in the useEffect hook */}
         </div>
       )}
 
@@ -2059,7 +2163,7 @@ function GamePlay() {
         </>
       )}
 
-{alibisOpen && (
+      {alibisOpen && (
         <>
           <div className="overlay" onClick={() => setAlibisOpen(false)} />
           <div className="alibis-container">
@@ -2119,8 +2223,8 @@ function GamePlay() {
           </div>
         </>
       )}
-      </div>
+    </div>
   );
 }
 
-export default GamePlay;
+export default GamePlay
