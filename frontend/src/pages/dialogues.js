@@ -87,7 +87,7 @@ const dialogues = {
     },
   ],
   
- /* stage2: {
+ stage2: {
     chris: [
       { id: "intro", char: "detective", text: "You're Chris Blaine—28, tall at 6 feet 3 inches, black hair, blue eyes, CEO by title." },
       { id: "intro", char: "chris", text: "Tall, dark, and suspicious, huh? You forgot charming." },
@@ -183,7 +183,7 @@ const dialogues = {
     ],
     // more suspects...
   },
-  /*/
+
 };
 
 export default dialogues;
