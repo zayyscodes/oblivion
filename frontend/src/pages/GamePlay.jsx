@@ -329,7 +329,7 @@ function GamePlay() {
 
           if (suggestionFrontendName) {
             setAiSuggestion(
-              `The AI suggests checking ${suggestionFrontendName}'s alibi.`
+              `PIP suggests checking ${suggestionFrontendName}'s alibi.`
             );
           } else {
             console.warn(`No frontend mapping found for ${data.most_suspected_suggestion}`);
