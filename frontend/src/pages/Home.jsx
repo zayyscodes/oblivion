@@ -208,7 +208,7 @@ function Home() {
                   <h2 className="game-heading">⚠️ Limited Tries</h2>
                   <ul className="oneliner">
                     <li>
-                      You have only four tries and just four minutes—
+                      You have only three tries and just four minutes—
                       <i>every choice could be your last.</i>
                     </li>
                   </ul>
