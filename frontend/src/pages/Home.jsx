@@ -128,19 +128,21 @@ function Home() {
               <div className="description-container">
                 <div className="description-text">
                   <p>
-                    <strong>Oblivion</strong> is an interactive murder mystery
-                    where your deduction skills are put to the test. A host has
-                    been found dead, and six suspects each hold a piece of the
-                    puzzle.
+                    <strong>Oblivion</strong> draws you into a world where a
+                    single death unravels a web of lies. The host lies dead,
+                    six suspects weave conflicting tales, and a hidden weapon
+                    waits to be uncovered. Each case twists into a new mystery
+                    — no two stories are ever the same.
                   </p>
                   <p>
-                    Investigate the scene, analyze deceptive clues, and use
-                    logic to pinpoint the murderer. With only four chances to
-                    solve the case and the option to unlock hints after two
-                    wrong guesses, every decision counts.
+                    Question suspects,
+                    chase alibis through flickering CCTV footage, and weigh AI
+                    whispers against your own instincts. Time is slipping away;
+                    you have only minutes, a few desperate chances, and the thin
+                    thread of truth to find the killer before the case consumes you.
                   </p>
 
-                  <p>Can you piece together the truth before it's too late?</p>
+                  <p>Will you uncover the truth — or be lost in the oblivion?</p>
                 </div>
               </div>
 
@@ -173,23 +175,21 @@ function Home() {
                   <ul className="oneliner">
                     <li>
                       <i>
-                        A lavish party turns deadly— the host is found lifeless
-                        in a locked room.
+                        A lavish party ends in tragedy—the host found lifeless in a pool,
+                        but the truth is far darker than it seems.
                       </i>
                     </li>
                     <li>
-                      Six suspects, each hiding secrets, and a trail of cryptic
-                      clues emerge.
+                      Six suspects, each with their own hidden secrets, and a web of mysterious clues emerge.
                     </li>
                   </ul>
 
                   <h2 className="game-heading">🕵️ Investigate the Scene</h2>
                   <ul className="oneliner">
-                    <li>Scrutinize each clue—every detail matters.</li>
+                    <li>Interrogate suspects, chase alibis, and scrutinize every detail—no clue is too small.</li>
                     <li>
                       <i>
-                        But beware—some clues are red herrings, leading you
-                        astray.
+                        Beware—some suspects will weave lies to protect themselves.
                       </i>
                     </li>
                   </ul>
@@ -197,28 +197,28 @@ function Home() {
                   <h2 className="game-heading">🎯 Make Your Guess</h2>
                   <ul className="oneliner">
                     <li>
-                      Decide the murderer’s identity and the weapon used—
-                      <i>trust your instincts.</i>
+                      Pinpoint the murderer and the weapon—
+                      <i>trust your instincts, not just the evidence.</i>
                     </li>
                     <li>
-                      A wrong guess won't reveal your mistake, leaving you in
-                      the dark...
+                      One wrong move, and the truth stays hidden in the shadows...
                     </li>
                   </ul>
 
                   <h2 className="game-heading">⚠️ Limited Tries</h2>
                   <ul className="oneliner">
                     <li>
-                      Four attempts stand between you and the truth—
-                      <i>use them wisely.</i>
+                      You have only four tries and just four minutes—
+                      <i>every choice could be your last.</i>
                     </li>
                   </ul>
 
                   <h2 className="game-heading">💡 Unlock Hints</h2>
                   <ul className="oneliner">
                     <li>
-                      Two missteps trigger a <i>lifeline</i>—a clue that may
-                      turn the case around.
+                      Two wrong guesses trigger an essential lifeline—
+                      <i>a cryptic hint to help you uncover the truth. </i>
+                      The closer you get, the clearer the case becomes.
                     </li>
                   </ul>
                 </div>
