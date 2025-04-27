@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import CountdownTimer from "../components/timer";
-
+import CountdownTimer from "../components/Timer.jsx";
+import Envelope from "../components/Envelope.jsx";
+import { useWindowSize } from "react-use";
+import Confetti from "react-confetti";
 import "./styles.css";
 import "./GamePlay.css";
 
 import background from "../assets/Something9.png";
 import inspector from "../assets/Something8.png";
 import detective from "../assets/Something3.png";
+import folder from "../assets/classified.PNG";
 import left from "../assets/arrow-left-solid.svg";
 import down from "../assets/arrow-down-solid.svg";
-
+import arrest from "../assets/handcuffs.png";
 // SUSPECTS
 import chris from "../assets/chris.JPEG";
 import jason from "../assets/jason.JPEG";
@@ -57,6 +60,7 @@ function GamePlay() {
   const [suspectsOpen, setSuspectsOpen] = useState(false);
   const [weaponsOpen, setWeaponsOpen] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
+  const [weaponCards, setWeaponCards] = useState(false);
   const [suspectDialogues, setSuspectDialogues] = useState({});
   const [alibiClaims, setAlibiClaims] = useState({});
   const [stage3Dialogues, setStage3Dialogues] = useState({});
@@ -64,7 +68,7 @@ function GamePlay() {
   const [selectedSuspect, setSelectedSuspect] = useState("");
   const [showDialogue, setShowDialogue] = useState(false);
   const [error, setError] = useState("");
-  const [timeLeft, setTimeLeft] = useState(180);
+  const [timeLeft, setTimeLeft] = useState(240);
   const [timerStarted, setTimerStarted] = useState(false);
   const [verifiedSuspects, setVerifiedSuspects] = useState(new Set());
   const [aiSuggestion, setAiSuggestion] = useState("");
@@ -81,6 +85,11 @@ function GamePlay() {
   const [username, setUsername] = useState("");
   const [leaderboard, setLeaderboard] = useState([]);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [introduced, setIntroduced] = useState(false);
+  const [clues, setClues] = useState(false);
+  const [record, setRecord] = useState(false);
+  const { width, height } = useWindowSize();
 
   console.log("Current step state:", step);
 
@@ -88,6 +97,21 @@ function GamePlay() {
   const hasFetchedAlibis = useRef(false);
   const hasStartedGame = useRef(false);
   const hasFetchedFinalDeduction = useRef(false);
+
+  useEffect(() => {
+    let timer;
+    if (showUsernamePrompt) {
+      timer = setTimeout(() => {
+        setRecord(true);
+      }, 5000); // 5 seconds
+    } else {
+      // Reset secondary div when primary div disappears
+      setRecord(false);
+    }
+
+    // Cleanup timer on unmount or when showPrimaryDiv changes
+    return () => clearTimeout(timer);
+  }, [showUsernamePrompt]);
 
   useEffect(() => {
     // Start timer only when timerStarted is true and timeLeft > 0
@@ -116,58 +140,6 @@ function GamePlay() {
     const min = String(Math.floor(seconds / 60)).padStart(2, "0");
     const sec = String(seconds % 60).padStart(2, "0");
     return `${min}:${sec}`;
-  };
-
-  const startNewGame = async () => {
-    try {
-      // Reset verifiedSuspects for a new game
-      setVerifiedSuspects(new Set());
-      setAlibiResults({});
-      console.log("Reset verifiedSuspects on new game");
-      const options = {
-        method: "POST",
-      };
-      console.log(
-        "Fetching http://127.0.0.1:5000/api/start_game with method POST"
-      );
-      const res = await fetch("http://127.0.0.1:5000/api/start_game", options);
-
-      if (!res.ok) {
-        console.log(
-          `HTTP error! Status: ${res.status}, Status Text: ${res.statusText}`
-        );
-        const errorData = await res.json().catch(() => ({}));
-        console.log("Error response from /start_game:", errorData);
-        throw new Error(
-          `HTTP error! Status: ${res.status}, Message: ${
-            errorData.message || res.statusText
-          }`
-        );
-      }
-
-      const data = await res.json();
-      console.log("Response from /start_game:", data);
-
-      if (data.status === "error") {
-        console.log(`Backend error: ${data.message}`);
-        setError(data.message);
-        return false;
-      }
-
-      console.log("Started new game with gameId:", data.game_id);
-      localStorage.setItem("gameId", data.game_id);
-      console.log(
-        "Updated localStorage gameId:",
-        localStorage.getItem("gameId")
-      );
-      setGameId(data.game_id);
-      setStep(1);
-      return true;
-    } catch (e) {
-      console.log("Fetch error for /start_game:", e.message);
-      setError("Failed to start a new game. Please try again.");
-      return false;
-    }
   };
 
   const fetchInitialData = async () => {
@@ -292,7 +264,9 @@ function GamePlay() {
 
   const fetchAiSuggestion = async () => {
     try {
-      const url = `http://127.0.0.1:5000/api/round3_get_suggestion?game_id=${encodeURIComponent(gameId)}`;
+      const url = `http://127.0.0.1:5000/api/round3_get_suggestion?game_id=${encodeURIComponent(
+        gameId
+      )}`;
       console.log(`Fetching ${url} with method GET to get AI suggestion`);
       const res = await fetch(url, {
         method: "GET",
@@ -309,7 +283,10 @@ function GamePlay() {
       }
 
       const data = await res.json();
-      console.log("Response from /round3_get_suggestion for AI suggestion:", data);
+      console.log(
+        "Response from /round3_get_suggestion for AI suggestion:",
+        data
+      );
 
       if (data.status === "error") {
         console.log(`Backend error: ${data.message}`);
@@ -323,7 +300,9 @@ function GamePlay() {
           // Normalize case for matching
           const suggestionLower = data.most_suspected_suggestion.toLowerCase();
           const suggestionFrontendName = Object.keys(SUSPECT_NAME_MAPPING).find(
-            (key) => SUSPECT_NAME_MAPPING[key].toLowerCase() === suggestionLower || key === suggestionLower
+            (key) =>
+              SUSPECT_NAME_MAPPING[key].toLowerCase() === suggestionLower ||
+              key === suggestionLower
           );
           console.log("Mapped frontend name:", suggestionFrontendName);
 
@@ -332,8 +311,12 @@ function GamePlay() {
               `PIP suggests checking ${suggestionFrontendName}'s alibi.`
             );
           } else {
-            console.warn(`No frontend mapping found for ${data.most_suspected_suggestion}`);
-            setAiSuggestion("The AI has no specific suspect to suggest at this time.");
+            console.warn(
+              `No frontend mapping found for ${data.most_suspected_suggestion}`
+            );
+            setAiSuggestion(
+              "The AI has no specific suspect to suggest at this time."
+            );
           }
         } else {
           setAiSuggestion("All suspects have been verified.");
@@ -347,7 +330,10 @@ function GamePlay() {
   };
 
   const verifyAlibi = async (suspectName) => {
-    console.log(`verifyAlibi called for ${suspectName}, verifiedSuspects:`, Array.from(verifiedSuspects));
+    console.log(
+      `verifyAlibi called for ${suspectName}, verifiedSuspects:`,
+      Array.from(verifiedSuspects)
+    );
     try {
       // Ensure suspectName is valid and mapped correctly
       const backendSuspectName = SUSPECT_NAME_MAPPING[suspectName];
@@ -358,12 +344,19 @@ function GamePlay() {
 
       // Double-check verifiedSuspects to prevent duplicate verification
       if (verifiedSuspects.has(suspectName)) {
-        throw new Error(`Frontend error: ${suspectName} already in verifiedSuspects`);
+        throw new Error(
+          `Frontend error: ${suspectName} already in verifiedSuspects`
+        );
       }
-      console.log(`Verifying alibi for ${suspectName} (backend: ${backendSuspectName}) with gameId: ${gameId}`);
+      console.log(
+        `Verifying alibi for ${suspectName} (backend: ${backendSuspectName}) with gameId: ${gameId}`
+      );
 
       const url = `http://127.0.0.1:5000/api/round3_verify_alibi`;
-      const requestBody = JSON.stringify({ suspect_name: backendSuspectName, game_id: gameId });
+      const requestBody = JSON.stringify({
+        suspect_name: backendSuspectName,
+        game_id: gameId,
+      });
       console.log(`Sending POST to ${url} with body: ${requestBody}`);
 
       const res = await fetch(url, {
@@ -376,12 +369,21 @@ function GamePlay() {
 
       if (!res.ok) {
         const errorText = await res.text().catch(() => "No response text");
-        console.error(`HTTP error for ${suspectName}: Status: ${res.status}, Response: ${errorText}`);
-        throw new Error(`HTTP error! Status: ${res.status}, Message: ${errorText || res.statusText}`);
+        console.error(
+          `HTTP error for ${suspectName}: Status: ${res.status}, Response: ${errorText}`
+        );
+        throw new Error(
+          `HTTP error! Status: ${res.status}, Message: ${
+            errorText || res.statusText
+          }`
+        );
       }
 
       const data = await res.json();
-      console.log(`Response from /round3_verify_alibi for ${suspectName}:`, data);
+      console.log(
+        `Response from /round3_verify_alibi for ${suspectName}:`,
+        data
+      );
 
       if (data.status === "error") {
         console.error(`Backend error for ${suspectName}: ${data.message}`);
@@ -469,7 +471,7 @@ function GamePlay() {
     }
 
     try {
-      const totalTime = 180 - timeLeft; // Total time used in seconds
+      const totalTime = 240 - timeLeft; // Total time used in seconds
       const scoreData = {
         username,
         time: formatTime(totalTime),
@@ -525,7 +527,7 @@ function GamePlay() {
 
       const url = `http://127.0.0.1:5000/api/make_guess`;
       console.log(
-        `Fetching ${url} with method POST for suspect: ${selectedSuspect}, weapon: ${selectedWeapon}`
+        `Fetching ${url} with method POST for suspect: ${selectedSuspect}, weapon: ${selectedWeapon}, current triesLeft: ${triesLeft}`
       );
       const res = await fetch(url, {
         method: "POST",
@@ -551,11 +553,13 @@ function GamePlay() {
         } catch (parseError) {
           console.log("Failed to parse error response:", parseError);
         }
-        throw new Error(`HTTP error! Status: ${res.status}, Message: ${errorMessage}`);
+        throw new Error(
+          `HTTP error! Status: ${res.status}, Message: ${errorMessage}`
+        );
       }
 
       const data = await res.json();
-      console.log("Response from /make_guess:", data);
+      console.log("Response from /make_guess:", JSON.stringify(data, null, 2));
 
       if (data.status === "error") {
         console.log(`Backend error: ${data.message}`);
@@ -564,21 +568,48 @@ function GamePlay() {
       }
 
       setGuessResult(data);
-      setTriesLeft(data.remaining_tries);
+      setTriesLeft((prev) => {
+        const newTries =
+          data.remaining_tries !== undefined
+            ? data.remaining_tries
+            : Math.max(0, prev - 1);
+        console.log(
+          `Updating triesLeft: prev=${prev}, newTries=${newTries}, backend remaining_tries=${data.remaining_tries}`
+        );
+        return newTries;
+      });
+
       if (data.status === "success") {
+        console.log(
+          "Correct guess! Stopping timer and showing username prompt."
+        );
         setTimerStarted(false); // Stop the timer on correct guess
-        // Show username prompt after 3 seconds
-        setTimeout(() => {
-          setShowUsernamePrompt(true);
-        }, 3000);
-      } else if (data.status === "game_over") {
-        // Show username prompt after 3 seconds
         setTimeout(() => {
           setShowUsernamePrompt(true);
         }, 3000);
       } else if (data.status === "incorrect") {
-        setSelectedSuspect("");
-        setSelectedWeapon("");
+        console.log(
+          `Incorrect guess. Remaining tries: ${data.remaining_tries}, triesLeft: ${triesLeft}`
+        );
+        if (triesLeft - 1 <= 0 || data.remaining_tries === 0) {
+          console.log("No tries left. Game over.");
+          setTimeout(() => {
+            setShowUsernamePrompt(true);
+          }, 1000);
+        } else {
+          console.log("Allowing another guess.");
+          setSelectedSuspect("");
+          setSelectedWeapon("");
+        }
+      } else if (data.status === "game_over") {
+        console.log("Backend signaled game_over. Ending game.");
+        setTimerStarted(false);
+        setTimeout(() => {
+          setShowUsernamePrompt(true);
+        }, 3000);
+      } else {
+        console.warn("Unexpected status from backend:", data.status);
+        setError("Unexpected response from server. Please try again.");
       }
     } catch (e) {
       console.log("Fetch error for /make_guess:", e.message);
@@ -832,7 +863,6 @@ function GamePlay() {
         return [...fallbackDialogues, ...staticDialogues];
       }
 
-      // Combine backend dialogues (up to rebuttal) with static dialogues (post-rebuttal)
       return [...backendUpToRebuttal, ...staticDialogues];
     }
     if (step === 3) {
@@ -907,6 +937,20 @@ function GamePlay() {
     );
   }
 
+  useEffect(() => {
+    if (currentDialogue[dialogueIndex]?.id === "weapons") {
+      setWeaponCards(!weaponCards);
+    }
+
+    if (currentDialogue[dialogueIndex]?.id === "weapons" && weaponCards) {
+      setWeaponCards(!weaponCards);
+    }
+  }, [currentDialogue, dialogueIndex]);
+
+  const handleSkip = () => {
+    setAIIndex(AI_dialogues.length);
+  };
+
   return (
     <div
       style={{
@@ -923,34 +967,107 @@ function GamePlay() {
       <img src={background} className="background" alt="background" />
       {showUsernamePrompt && (
         <>
-          <div className="overlay" />
-          <div className="username-popup">
-            <p
-              className="section-header"
-              style={{ fontSize: "clamp(16px, 2vw, 20px)", margin: "0 0 20px 0" }}
-            >
-              Game Over! Submit Your Score?
-            </p>
-            <input
-              type="text"
-              className="username-input"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Your username"
-            />
-            <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
-              <button className="username-submit" onClick={submitScore}>
-                Submit Score
-              </button>
-              <button
-                className="username-submit"
-                style={{ backgroundColor: "#ff4d4d" }}
-                onClick={navigateToHome}
+          {guessResult?.status === "success" ? (
+            <>
+              <div className="overlay" style={{ zIndex: "5000" }} />
+              <img src={arrest} style={{
+                position: "fixed",
+                top: "20%",
+                left: "26%",
+                width: "40%",
+                zIndex: "5002",
+              }}/>
+
+              <Confetti width={width} height={height}  style={{ zIndex: 5001 }}/>
+
+              {record && (
+                <div className="username-popup" style={{ zIndex: "5100" }}>
+                <p
+                  className="section-header"
+                  style={{
+                    fontSize: "clamp(16px, 2vw, 20px)",
+                    margin: "0 0 20px 0",
+                    textShadow: "0px 0px 10px black",
+                    border: "none",
+                    backgroundColor: "transparent",
+                  }}
+                >
+                  SUBMIT YOUR SCORES?
+                </p>
+                <input
+                  type="text"
+                  className="username-input"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Your username"
+                />
+                <div
+                  style={{ display: "flex", gap: "10px", marginTop: "20px" }}
+                >
+                  <button className="username-submit" onClick={submitScore}>
+                    SUBMIT SCORE
+                  </button>
+                  <button
+                    className="username-submit"
+                    style={{
+                      backgroundColor: "red",
+                      border: "dashed 3px rgb(132, 4, 4)",
+                    }}
+                    onClick={navigateToHome}
+                  >
+                    RETURN TO HOME
+                  </button>
+                </div>
+              </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="overlay" style={{ zIndex: "4500" }} />
+              <div
+                style={{
+                  position: "relative",
+                  display: "grid",
+                  gridTemplateRows: "1fr 30%",
+                }}
               >
-                Return to Home
-              </button>
-            </div>
-          </div>
+                <div
+                  style={{
+                    fontFamily: '"Rubik Glitch"',
+                    fontSize: "180px",
+                    color: "rgb(190, 8, 8)",
+                    textShadow: "4px 4px 1px rgba(249, 245, 192, 0.97)",
+                    fontWeight: "bold",
+                    margin: "0",
+                    textAlign: "center",
+                    position: "fixed",
+                    top: "27%",
+                    left: "10%",
+                    animation: "slideInDown 2s ease-in-out", // Changed to slideInDown
+                    zIndex: "4600",
+                  }}
+                >
+                  GAME OVER
+                </div>
+
+                <button
+                  className="username-submit"
+                  style={{
+                    backgroundColor: "red",
+                    border: "dashed 3px rgb(132, 4, 4)",
+                    zIndex: 4600,
+                    maxWidth: "200px",
+                    position: "fixed",
+                    top: "60%",
+                    left: "40%",
+                  }}
+                  onClick={navigateToHome}
+                >
+                  RETURN TO HOME
+                </button>
+              </div>
+            </>
+          )}
         </>
       )}
 
@@ -997,13 +1114,15 @@ function GamePlay() {
               }}
             >
               <div style={{ padding: "1rem" }}>
-                <button
-                  className="analyse-buttons"
-                  onClick={() => setWeaponsOpen(true)}
-                >
-                  WEAPONS
-                </button>
-                <div className="proceed-option">
+                {weaponCards && (
+                  <button
+                    className="analyse-buttons"
+                    onClick={() => setWeaponsOpen(true)}
+                  >
+                    WEAPONS
+                  </button>
+                )}
+                <div className={weaponCards ? "proceed-option" : ""}>
                   <button className="proceed-buttons" onClick={nextStep}>
                     PROCEED
                   </button>
@@ -1050,17 +1169,16 @@ function GamePlay() {
                       {currentDialogue[dialogueIndex].text}
                     </p>
 
-                    {currentDialogue[dialogueIndex].id &&
-                      currentDialogue[dialogueIndex].id !== "N/A" &&
-                      currentDialogue[dialogueIndex].id !== "weapons" &&
-                      weaponImages[currentDialogue[dialogueIndex].id] && (
-                        <img
-                          src={weaponImages[currentDialogue[dialogueIndex].id]}
-                          className="appear-card"
-                          style={{ left: "3%" }}
-                          alt="Weapon"
-                        />
-                      )}
+                    <img
+                      src={weaponImages[currentDialogue[dialogueIndex].id]}
+                      className="appear-card"
+                      style={{
+                        left: weaponImages[currentDialogue[dialogueIndex].id]
+                          ? "3%"
+                          : "-30%",
+                        transition: "left 0.5s ease-in-out",
+                      }}
+                    />
 
                     {dialogueIndex === currentDialogue.length - 1 && (
                       <div
@@ -1068,24 +1186,14 @@ function GamePlay() {
                           display: "flex",
                           flexDirection: "row",
                           position: "absolute",
-                          top: "73%",
+                          alignItems: "center",
+                          top: "74%",
                           zIndex: "1400",
                           left: "8%",
                         }}
                       >
-                        <img
-                          src={down}
-                          style={{ width: "8%" }}
-                          alt="Down Arrow"
-                        />
-                        <div
-                          className="warning"
-                          style={{
-                            margin: "0",
-                            width: "155px",
-                            textShadow: "2px 2px 2px grey",
-                          }}
-                        >
+                        <img src={down} style={{ width: "8%" }} />
+                        <div className="proceed-text">
                           PROCEED TO NEXT STAGE
                         </div>
                       </div>
@@ -1231,14 +1339,7 @@ function GamePlay() {
                         style={{ width: "8%" }}
                         alt="Left Arrow"
                       />
-                      <div
-                        className="warning"
-                        style={{
-                          margin: 0,
-                          width: "155px",
-                          textShadow: "2px 2px 2px grey",
-                        }}
-                      >
+                      <div className="proceed-text">
                         PROCEED TO NEXT SUSPECT
                       </div>
                     </div>
@@ -1251,26 +1352,14 @@ function GamePlay() {
                         display: "flex",
                         flexDirection: "row",
                         position: "absolute",
-                        top: "73%",
+                        alignItems: "center",
+                        top: "74%",
                         zIndex: "1400",
                         left: "8%",
                       }}
                     >
-                      <img
-                        src={down}
-                        style={{ width: "8%" }}
-                        alt="Down Arrow"
-                      />
-                      <div
-                        className="warning"
-                        style={{
-                          margin: 0,
-                          width: "155px",
-                          textShadow: "2px 2px 2px grey",
-                        }}
-                      >
-                        PROCEED TO NEXT STAGE
-                      </div>
+                      <img src={down} style={{ width: "8%" }} />
+                      <div className="proceed-text">PROCEED TO NEXT STAGE</div>
                     </div>
                   )}
               </div>
@@ -1300,6 +1389,52 @@ function GamePlay() {
                     {AI_dialogues[AIIndex]}
                   </p>
 
+                  {AIIndex === 0 && (
+                    <p
+                      style={{
+                        position: "absolute",
+                        top: "48%",
+                        left: "100px",
+                        fontSize: "12px",
+                        color: "rgb(38, 38, 38)",
+                      }}
+                    >
+                      <i>press SPACE to continue</i>
+                    </p>
+                  )}
+
+                  <button
+                    onClick={handleSkip}
+                    style={{
+                      position: "fixed",
+                      bottom: "5%",
+                      left: "40%",
+                      padding: "10px 20px",
+                      fontFamily: "'Press Start 2P', cursive",
+                      fontSize: "15px",
+                      color: "white",
+                      backgroundColor: "rgb(64, 122, 162)",
+                      boxShadow: "2px 2px 1px black",
+                      border: "dashed 3px rgb(178, 216, 237)",
+                      borderRadius: "5px",
+                      cursor: "pointer",
+                      textShadow: "2px 2px 1px black",
+                      zIndex: 1000,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = "rgb(178, 216, 237)";
+                      e.target.style.border = "dashed 3px rgb(64, 122, 162)";
+                      e.target.style.textShadow = "0px 0px 10px black";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = "rgb(64, 122, 162)";
+                      e.target.style.border = "dashed 3px rgb(178, 216, 237)";
+                      e.target.style.textShadow = "2px 2px 1px black";
+                    }}
+                  >
+                    SKIP
+                  </button>
+
                   <img
                     src={robo}
                     style={{
@@ -1315,10 +1450,11 @@ function GamePlay() {
 
             {AIPop && AIIndex >= AI_dialogues.length - 1 && (
               <>
+                <div className="overlay" />
                 <div className="AI_popup" style={{ textAlign: "center" }}>
                   <p className="start-text">FROM THIS ROUND ONWARD...</p>
                   <p className="start-text">⏱️ A TIMER WILL START.</p>
-                  <p className="start-text">🕵️‍♂️ YOU HAVE 3 MINUTES TO:</p>
+                  <p className="start-text">🕵️‍♂️ YOU HAVE 4 MINUTES TO:</p>
                   <p className="start-text">
                     INTERVIEW SUSPECTS, VERIFY FACTS & MAKE DEDUCTIONS TO WIN.
                   </p>
@@ -1329,7 +1465,7 @@ function GamePlay() {
                       fontSize: "1.2vw",
                       backgroundColor: "white",
                       color: "green",
-                      border: "dashed 2px green",
+                      border: "dashed 3px green",
                       fontFamily: "'Press Start 2P'",
                       padding: "1rem",
                       cursor: "pointer",
@@ -1345,7 +1481,9 @@ function GamePlay() {
               </>
             )}
 
-            {!AIPop && <CountdownTimer time={formatTime(timeLeft)} />}
+            {!AIPop && (
+              <CountdownTimer time={formatTime(timeLeft)} step={step} />
+            )}
 
             <div
               style={{
@@ -1506,6 +1644,29 @@ function GamePlay() {
                   )}
                 </div>
 
+                {dialogueIndex === currentDialogue.length - 1 &&
+                  currentSuspectIndex !== suspectNames.length - 1 && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        position: "absolute",
+                        top: "49%",
+                        zIndex: "1400",
+                        left: "40%",
+                      }}
+                    >
+                      <img
+                        src={left}
+                        style={{ width: "8%" }}
+                        alt="Left Arrow"
+                      />
+                      <div className="proceed-text">
+                        PROCEED TO NEXT SUSPECT
+                      </div>
+                    </div>
+                  )}
+
                 {showDialogue && (
                   <p
                     className={
@@ -1560,7 +1721,7 @@ function GamePlay() {
               <p style={{ margin: 0 }}>STAGE 4: ALIBI VERIFICATION</p>
             </div>
 
-            <CountdownTimer time={formatTime(timeLeft)} />
+            <CountdownTimer time={formatTime(timeLeft)} step={step} />
 
             <div
               style={{
@@ -1654,17 +1815,40 @@ function GamePlay() {
                         zIndex: "99",
                       }}
                     >
+                      <p>ALIBI VERIFICATION:</p>
                       {showDialogue &&
                       dialogueIndex >= 2 &&
                       stage4Dialogues.length > 2 ? (
-                        <p style={{ margin: "0", color: "#FFD700" }}>
+                        <p
+                          style={{
+                            margin: "0",
+                            color:
+                              stage4Dialogues[2].text === "Alibi is valid."
+                                ? "rgb(6, 185, 39)"
+                                : "rgb(234, 9, 9)",
+                            marginTop: "9%",
+                            textShadow:
+                              stage4Dialogues[2].text === "Alibi is valid."
+                                ? "2px 2px 1px rgb(4, 63, 2)"
+                                : "2px 2px 1px rgb(94, 5, 2)",
+                            fontSize: "20px",
+                          }}
+                        >
                           {stage4Dialogues[2].text}
                         </p>
                       ) : (
-                        <p style={{ margin: "0", color: "#FFD700" }}>
+                        <p
+                          style={{
+                            margin: "0",
+                            color: "rgb(198, 214, 237)",
+                            marginTop: "9%",
+                            fontSize: "18px",
+                            textShadow: "2px 2px 1px rgb(6, 19, 59)",
+                          }}
+                        >
                           {showDialogue
-                            ? "Verifying alibi..."
-                            : "Select a suspect to verify their alibi."}
+                            ? "VERIFYING ALIBI..."
+                            : "SELECT A SUSPECT TO VERIFY ALIBI"}
                         </p>
                       )}
                     </div>
@@ -1678,7 +1862,7 @@ function GamePlay() {
                   }}
                 >
                   <img
-                    src={detective}
+                    src={inspector}
                     style={{
                       width: "22%",
                       marginTop: "20px",
@@ -1806,17 +1990,16 @@ function GamePlay() {
                           setSelectedSuspect("");
                         }}
                       >
-                        <img
-                          src={left}
-                          style={{ width: "8%" }}
-                          alt="Left Arrow"
-                        />
                         <div
-                          className="warning"
+                          className="next-button"
                           style={{
-                            margin: 0,
-                            width: "155px",
-                            textShadow: "2px 2px 2px grey",
+                            padding: "10px 5px",
+                            fontSize: "14px",
+                            maxWidth: "100px",
+                            position: "fixed",
+                            bottom: "9vw",
+                            left: "14.1%",
+                            top: "auto",
                           }}
                         >
                           CHANGE SUSPECT
@@ -1867,7 +2050,7 @@ function GamePlay() {
               <p style={{ margin: 0 }}>STAGE 5: FINAL DEDUCTION</p>
             </div>
 
-            <CountdownTimer time={formatTime(timeLeft)} />
+            <CountdownTimer time={formatTime(timeLeft)} step={step} />
 
             <div
               style={{
@@ -1900,19 +2083,117 @@ function GamePlay() {
                   ALIBIS
                 </button>
 
+                <div
+                  className="next-button"
+                  style={{
+                    padding: "8px 5px",
+                    fontSize: "14px",
+                    maxWidth: "100px",
+                    position: "fixed",
+                    bottom: "5.4vw",
+                    zIndex: "100",
+                    left: "14.1%",
+                    top: "auto",
+                  }}
+                >
+                  TRIES LEFT: {triesLeft}
+                </div>
+
                 {finalDeductionData && finalDeductionData.top_suspects && (
-                  <div className="suggestions" style={{ marginLeft: "2px" }}>
-                    <label className="suggestion-label">PiP SUGGESTS</label>
-                    <p className="suggestion-text">
-                      Top suspects:{" "}
+                  <div
+                    className="suspects"
+                    style={{ marginLeft: "2px", padding: "1rem" }}
+                  >
+                    <label className="suspects-label">PiP SUSPECTS</label>
+                    <p className="suspects-text">
                       {finalDeductionData.top_suspects
                         .map((s) => s.name)
-                        .join(", ")}
-                    </p>
-                    <p className="suggestion-text">
-                      Weapon clue: {finalDeductionData.weapon_clue}
+                        .join(" & ")}
                     </p>
                   </div>
+                )}
+
+                <img
+                  src={folder}
+                  style={{
+                    width: "12.5%",
+                    position: "fixed",
+                    bottom: "19%",
+                    left: "7%",
+                    zIndex: introduced ? "100" : "3000",
+                  }}
+                  onClick={() => setNotesOpen(true)}
+                />
+
+                {!introduced && (
+                  <>
+                    <div className="overlay" />
+                    <div className="AI_popup">
+                      <p
+                        className="AI_popup_text"
+                        style={{
+                          transition: "opacity 2s ease-out",
+                          top: "15%", // Add transition for fade-out effect
+                        }}
+                      >
+                        THE FORENSICS LAB JUST SENT OVER THEIR OFFICIAL REPORT.
+                      </p>
+
+                      <button
+                        style={{
+                          position: "fixed",
+                          bottom: "5%",
+                          left: "40%",
+                          padding: "10px 20px",
+                          fontFamily: "'Press Start 2P', cursive",
+                          fontSize: "15px",
+                          color: "white",
+                          backgroundColor: "rgb(64, 122, 162)",
+                          boxShadow: "2px 2px 1px black",
+                          border: "dashed 3px rgb(178, 216, 237)",
+                          borderRadius: "5px",
+                          cursor: "pointer",
+                          textShadow: "2px 2px 1px black",
+                          zIndex: 1000,
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = "rgb(178, 216, 237)";
+                          e.target.style.border =
+                            "dashed 3px rgb(64, 122, 162)";
+                          e.target.style.textShadow = "0px 0px 10px black";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = "rgb(64, 122, 162)";
+                          e.target.style.border =
+                            "dashed 3px rgb(178, 216, 237)";
+                          e.target.style.textShadow = "2px 2px 1px black";
+                        }}
+                        onClick={() => setIntroduced(true)}
+                      >
+                        OK
+                      </button>
+
+                      <img
+                        src={inspector}
+                        style={{
+                          width: "35%",
+                          marginLeft: "65%",
+                          transition: "opacity 2s ease-out", // Add transition for fade-out effect
+                          opacity: AIIndex >= AI_dialogues.length - 1 ? 0 : 1, // Fade out when dialogue ends
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {notesOpen && (
+                  <>
+                    <div
+                      className="overlay"
+                      onClick={() => setNotesOpen(false)}
+                    />
+                    <Envelope text={finalDeductionData.weapon_clue} />
+                  </>
                 )}
 
                 <div className="proceed-option">
@@ -1920,17 +2201,34 @@ function GamePlay() {
                     selectedWeapon &&
                     triesLeft > 0 &&
                     !guessResult && (
-                      <button className="proceed-buttons" onClick={makeGuess}>
+                      <button
+                        className="proceed-buttons"
+                        onClick={makeGuess}
+                        style={{
+                          fontSize: "19.5px",
+                          padding: "1rem 5px",
+                        }}
+                      >
                         SUBMIT GUESS
                       </button>
                     )}
                   {guessResult?.status === "incorrect" && (
-                    <button
-                      className="proceed-buttons"
-                      onClick={() => setGuessResult(null)} // Clear guess result to allow another guess
-                    >
-                      TRY AGAIN
-                    </button>
+                    <>
+                      <button
+                        className="proceed-buttons"
+                        onClick={() => {
+                          setGuessResult(null);
+                          setClues(false);
+                        }} // Clear guess result to allow another guess
+                        style={{
+                          fontSize: "19.5px",
+                          padding: "1rem 5px",
+                          zIndex: clues ? "3000" : "2000",
+                        }}
+                      >
+                        TRY AGAIN
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -2081,19 +2379,36 @@ function GamePlay() {
                 </div>
 
                 {guessResult && (
-                  <p className="detective-dialogue-box">
-                    {guessResult.message}
+                  <div className="overlay">
                     {guessResult.status === "incorrect" && (
                       <>
-                        <br />
-                        Killer Clue: {guessResult.killer_clue}
-                        <br />
-                        Weapon Clue: {guessResult.weapon_clue}
-                        <br />
-                        Tries Left: {guessResult.tries_left}
+                        <div className="AI_popup">
+                          <p
+                            style={{
+                              fontFamily: "'Press Start 2P'",
+                              fontSize: "18px",
+                              color: "rgb(123, 166, 218)",
+                              textShadow: "2px 2px 1px rgba(5, 20, 61, 0.97)",
+                              margin: "0",
+                            }}
+                          >
+                            MORE EVIDENCE...
+                          </p>
+                          <strong
+                            style={{
+                              margin: 0,
+                              color: "rgb(3, 20, 41)",
+                              textShadow: "0px 0px 1px rgba(16, 34, 84, 0.36)",
+                              textAlign: "center",
+                            }}
+                          >
+                            {guessResult.killer_clue}
+                          </strong>
+                          <br />
+                        </div>
                       </>
                     )}
-                  </p>
+                  </div>
                 )}
               </div>
             </div>
@@ -2209,7 +2524,8 @@ function GamePlay() {
                         ) : (
                           <span className="alibi-invalid">Invalid</span>
                         )}{" "}
-                        (Claimed: {alibiResults[suspect].claimedLocation || "N/A"})
+                        (Claimed:{" "}
+                        {alibiResults[suspect].claimedLocation || "N/A"})
                       </>
                     ) : (
                       <span className="alibi-not-verified">Not Verified</span>
@@ -2227,4 +2543,4 @@ function GamePlay() {
   );
 }
 
-export default GamePlay
+export default GamePlay;

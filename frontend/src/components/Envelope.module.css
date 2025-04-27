@@ -1,0 +1,85 @@
+:root {
+    --primary: #f3eccb;
+    --bg-envelope-color: #f5edd1;
+    --envelope-tab: #debc80;
+    --envelope-cover: #c9a971;
+    --shadow-color: rgba(0, 0, 0, 0.4);
+    --txt-color: #444;
+  }
+  
+  .container {
+    position: fixed;
+    z-index: 3000;
+    margin-left: 25%;
+    margin-top: -8%;
+  }
+  
+  .envelope-wrapper {
+    position: relative; /* This will allow us to position the envelope relative to the overlay */
+    background: var(--bg-envelope-color);
+    box-shadow: 0 0 40px var(--shadow-color);
+    transition: transform 0.3s ease-in-out; /* Smooth transition */
+    cursor: pointer; /* Pointer cursor on hover */
+    z-index: 3020; /* Ensure it's above the overlay */
+  }
+  
+  .envelope {
+    width: 500px; /* Increased width */
+    height: 230px;
+    margin-bottom: 50%;
+  }
+  
+  .envelope::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    z-index: 2;
+    border-top: 130px solid var(--envelope-tab);
+    border-right: 250px solid transparent; /* Adjusted for new width */
+    border-left: 250px solid transparent; /* Adjusted for new width */
+    transform-origin: top;
+    transition: all 0.1s ease-in-out 0.7s;
+  }
+  
+  .envelope::after {
+    content: "";
+    position: absolute;
+    z-index: 3002;
+    width: 0px;
+    height: 0px;
+    border-top: 130px solid transparent;
+    border-right: 250px solid var(--envelope-cover); /* Adjusted for new width */
+    border-bottom: 100px solid var(--envelope-cover);
+    border-left: 250px solid var(--envelope-cover); /* Adjusted for new width */
+  }
+  
+  .letter {
+    position: absolute;
+    right: 20%;
+    bottom: 0;
+    width: 54%;
+    height: 80%;
+    background: var(--primary);
+    text-align: center;
+    transition: all 1s ease-in-out;
+    box-shadow: 0 0 5px var(--shadow-color);
+    padding: 1rem;
+  }
+  
+  .text {
+    font-family: 'Press Start 2P';
+    color: var(--txt-color);
+    font-size: 8px;
+    text-align: center;
+  }
+  
+  .flap > .envelope:before {
+    transform: rotateX(180deg);
+    z-index: 0;
+  }
+  
+  .flap > .envelope > .letter {
+    bottom: 100px;
+    transform: scale(1.5);
+    transition-delay: 0.5s;
+  }

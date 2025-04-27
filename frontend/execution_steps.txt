@@ -1,4 +1,4 @@
 cd frontend
 npm i
-npm i react-router-dom
+npm i react-router-dom react-use react-confetti
 npm run dev

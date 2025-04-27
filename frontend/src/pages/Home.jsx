@@ -29,7 +29,6 @@ function Home() {
     }, 6000);
   }, []);
 
-
   useEffect(() => {
     const handleResize = () => {
       setIsFullScreen(window.innerWidth >= 1024);
@@ -51,7 +50,10 @@ function Home() {
       console.log("Response from /start_game:", JSON.stringify(data, null, 2));
 
       if (data.status === "success") {
-        console.log("Game started successfully:", JSON.stringify(data, null, 2));
+        console.log(
+          "Game started successfully:",
+          JSON.stringify(data, null, 2)
+        );
         // Store gameId in localStorage
         localStorage.setItem("gameId", data.game_id);
         console.log("Stored gameId in localStorage:", data.game_id);
@@ -64,7 +66,7 @@ function Home() {
       console.error("Error starting game:", error);
     }
   };
-  
+
   return (
     <div
       className="homepage"
@@ -75,22 +77,18 @@ function Home() {
           position: "relative",
         }}
       >
-        <img
-          src={header}
-          className="header"
-        />
+        <img src={header} className="header" />
         <div
           style={{
             fontFamily: '"Rubik Glitch"',
-            color: "rgb(245, 239, 187)",
+            color: "rgb(245, 241, 202)",
             position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
+            top: "30%",
+            left: "11%",
             fontSize: "clamp(60px, 15vw, 220px)", // Scales dynamically
             textAlign: "center",
-            textShadow: "3px 3px 1px rgb(0, 0, 0)",
-            animation: "fadeIn 2s ease-in-out",
+            textShadow: "3px 3px 5px rgb(0, 0, 0)",
+            animation: "slideInDown 2s ease-in-out", // Changed to slideInDown
             whiteSpace: "nowrap",
           }}
         >
@@ -99,9 +97,7 @@ function Home() {
 
         {/* Delayed Appearing Text */}
         {showLiner && (
-          <div
-            className="oneliner-header"
-          >
+          <div className="oneliner-header">
             UNRAVEL THE TRUTH, ONE CLUE AT A TIME...
           </div>
         )}
@@ -117,9 +113,9 @@ function Home() {
                 }}
               >
                 <div className="note">
-                  <strong>NOTE:</strong> To ensure better experience, you are ADVISED to play in FULL SCREEN MODE
+                  <strong>NOTE:</strong> To ensure better experience, you are
+                  ADVISED to play in FULL SCREEN MODE
                 </div>
-
               </section>
             )}
             <section
@@ -248,4 +244,3 @@ function Home() {
 }
 
 export default Home;
-

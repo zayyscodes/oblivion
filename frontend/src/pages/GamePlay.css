@@ -8,7 +8,7 @@
   font-size: 3vw;
   margin-bottom: 0;
   border: dashed 5px white;
-  margin: 10px 5%;
+  margin: 10px 4.5%;
   background-color: rgba(57, 3, 111, 0.23);
   text-shadow: 5px 5px 1px rgb(109, 141, 229);
 }
@@ -21,7 +21,7 @@
   color: rgb(245, 239, 187);
   border: dashed 3px rgb(247, 207, 169);
   background-color: rgb(220, 109, 6);
-  font-size: clamp(20px, 2.1vw, 28px);
+  font-size: clamp(20px, 2.1vw, 22px);
   z-index: 2100;
   border-radius: 0;
 }
@@ -85,7 +85,7 @@
 .background {
   position: fixed;
   top: 0;
-  left: -5%;
+  left: 31%;
   height: auto;
   object-fit: cover;
   opacity: 0.3;
@@ -101,7 +101,7 @@
 }
 
 .proceed-buttons {
-  margin: 5%;
+  margin: 1%;
   padding: 10px 5px;
   width: 250px;
   font-family: "Press Start 2P";
@@ -119,7 +119,7 @@
   text-shadow: 0px 0px 10px rgb(0, 0, 0);
 }
 
-.warning {
+.warning, .proceed-text {
   text-align: center;
   color: white;
   font-family: "Press Start 2P";
@@ -128,6 +128,12 @@
   width: 180px;
   margin-left: 15%;
   margin-top: 0;
+}
+
+.proceed-text {
+  margin: 0;
+  width: 155px;
+  text-shadow: 1px 1px 1px grey;
 }
 
 .game-box {
@@ -162,13 +168,13 @@
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.745);
-  z-index: 999;
+  z-index: 2120;
 }
 
 .appear-card {
-  width: 21%; /* or any fixed width if preferred */
-  height: auto; /* Let height adjust to image */
-  aspect-ratio: 3 / 4; /* Optional: maintains consistent ratio */
+  width: 21%;
+  height: auto;
+  aspect-ratio: 3 / 4;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
@@ -177,7 +183,10 @@
   border: ridge 5px white;
   border-radius: 20px;
   z-index: 1100;
-  transition: left 0.4s ease-in-out;
+}
+
+.appear-card.show {
+  left: 3%; /* When you want it to appear */
 }
 
 .card {
@@ -192,7 +201,7 @@
   top: 30px;
   border: ridge 5px white;
   border-radius: 20px;
-  z-index: 1100;
+  z-index: 3000;
 }
 
 .arrow {
@@ -206,7 +215,7 @@
   padding: 2px 17px 3px 15px;
   cursor: pointer;
   font-size: 30px;
-  z-index: 1100;
+  z-index: 3000;
 }
 
 .fade-container {
@@ -231,16 +240,16 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: rgb(0, 35, 63);
+  background-color: rgb(79, 112, 139);
   padding: 2rem;
   box-shadow: 0px 0px 35px rgb(0, 9, 12);
   border-radius: 10px;
-  border: dashed 5px rgb(80, 117, 146);
+  border: dashed 5px rgb(23, 62, 91);
   font-weight: bold;
   width: 80%;
   font-family: "Montserrat", sans-serif;
   max-width: 500px;
-  z-index: 1000;
+  z-index: 3000;
   overflow: hidden;
 }
 
@@ -258,10 +267,12 @@
   font-weight: bold;
   height: auto;
   font-size: clamp(12px, 3.2vw, 13px);
-  z-index: 500;
+  z-index: 3000;
   font-family: "Press Start 2P";
   color: rgb(247, 229, 213);
   font-size: 1vw;
+  text-align: right;
+  text-shadow: 1px 1px 1px black;
 }
 
 .start-text {
@@ -269,6 +280,7 @@
   color: rgb(190, 230, 255);
   font-family: "Press Start 2P";
   margin-bottom: 1rem;
+  text-shadow: 1px 1px 1px black;
 }
 
 .alibis-container {
@@ -280,7 +292,7 @@
   background-color: rgba(251, 240, 216, 0.9);
   border: dashed 4px rgb(19, 2, 101);
   padding: 20px;
-  z-index: 2000;
+  z-index: 3000;
   text-align: center;
 }
 
@@ -320,45 +332,45 @@
   font-style: italic;
 }
 
-
-.suggestions {
-  background-color: rgb(5, 26, 56);
+.suggestions, .suspects {
+  background-color: rgb(3, 19, 41);
   border: dashed 3px rgb(142, 196, 212);
   color: rgb(24, 179, 221);
   width: 211px;
-  margin-top: 30px;
+  margin-top: 1%;
   margin-left: -500px;
   padding: 1rem;
   overflow: hidden;
-  border-radius: 10px;
   transition: left 0.4s ease-in-out;
 }
 
-.suggestion-label {
-  font-size: 1vw;
+.suggestion-label, .suspects-label {
+  font-size: 1.1vw;
   font-family: "Press Start 2P";
-  text-shadow: 2px 2px 1px rgb(14, 70, 106);
+  text-shadow: 2px 2px 1px rgb(30, 56, 72);
   letter-spacing: 2px;
 }
 
-.suggestion-text{
+.suggestion-text, .suspects-text {
   font-size: 1.2vw;
   font-weight: bold;
   color: rgb(178, 212, 222);
   margin: 0;
-  text-shadow: 0px 0px 5px rgb(113, 144, 164);
+  letter-spacing: 1px;
+  text-align: center;
+  text-shadow: 0px 0px 1px rgb(113, 144, 164);
   font-family: 'Courier New', Courier, monospace;
 }
 
 .username-popup {
   position: fixed;
   top: 50%;
-  left: 50%;
+  left: 47%;
   transform: translate(-50%, -50%);
   background-color: rgb(57, 48, 72);
   border: dashed 5px rgb(255, 255, 255);
   padding: 20px;
-  z-index: 2000;
+  z-index: 3000;
   width: 60%;
   max-width: 500px;
   display: flex;
@@ -382,8 +394,8 @@
 .username-submit {
   font-family: "Press Start 2P";
   padding: 10px 20px;
-  border: dashed 3px rgb(247, 207, 169);
-  background-color: rgb(220, 109, 6);
+  border: dashed 3px rgb(64, 122, 61);
+  background-color: rgb(81, 173, 61);
   color: rgb(245, 239, 187);
   font-size: clamp(12px, 1.5vw, 16px);
   cursor: pointer;
@@ -391,8 +403,7 @@
 }
 
 .username-submit:hover {
-  box-shadow: 0px 0px 10px rgb(213, 68, 0);
-  border: dashed 3px rgb(213, 68, 0);
+  border: dashed 3px rgb(24, 84, 20);
   text-shadow: 0px 0px 10px rgb(0, 0, 0);
 }
 
@@ -404,7 +415,7 @@
   background-color: rgba(57, 3, 111, 0.9);
   border: dashed 5px rgb(255, 255, 255);
   padding: 20px;
-  z-index: 2000;
+  z-index: 3000;
   width: 60%;
   max-width: 600px;
   max-height: 80%;
@@ -436,4 +447,85 @@
   font-size: clamp(12px, 1.5vw, 16px);
   color: rgb(18, 2, 96);
   margin: 0;
+}
+
+.wrapper {
+  height: 200px;
+  width: 300px;
+  background-color: #C4DFF0; /* base color */
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+  margin-top: 5vw;
+  margin-left: 24vw;
+  overflow: hidden;
+}
+
+/* Triangle Flap (Top) */
+.lid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 150px solid transparent;
+  border-right: 150px solid transparent;
+  border-bottom: 100px solid #3760C9; /* dark blue */
+  z-index: 3;
+  transform-origin: top;
+  transition: transform 0.5s;
+}
+
+/* Lower sides */
+.envelope::before,
+.envelope::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-bottom: 100px solid #C4DFF0;
+}
+
+.envelope::before {
+  left: 0;
+  border-right: 150px solid transparent;
+}
+
+.envelope::after {
+  right: 0;
+  border-left: 150px solid transparent;
+}
+
+/* Letter */
+.letter {
+  position: absolute;
+  width: 80%;
+  height: 120px;
+  background: white;
+  border-radius: 10px;
+  top: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+  transition: 0.5s;
+}
+
+/* Text inside */
+.letter p {
+  text-align: center;
+  font-size: 30px;
+  color: #3B4049;
+}
+
+/* Animation on hover */
+.wrapper:hover .lid {
+  transform: rotateX(180deg);
+}
+
+.wrapper:hover .letter {
+  transform: translateY(-50px);
 }

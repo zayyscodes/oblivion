@@ -6,12 +6,12 @@ import anchor from "../assets/IMG_0970.PNG";
 import victim from "../assets/victim.png";
 import pool from "../assets/pool_body.jpg";
 import intro from "../assets/intro.JPG";
-import chris from "../assets/chris.JPEG";
-import jason from "../assets/jason.JPEG";
-import kate from "../assets/kate.JPEG";
-import poppy from "../assets/poppy.JPEG";
-import violet from "../assets/violet.JPEG";
-import zehab from "../assets/zehab.JPEG";
+import chris from "../assets/Wherethis.jpg";
+import jason from "../assets/Something2.jpg";
+import kate from "../assets/Whythis.jpg";
+import poppy from "../assets/Whatthis.jpg";
+import violet from "../assets/Whothis.jpg";
+import zehab from "../assets/Something1.jpg";
 import house from "../assets/IMG_0985.JPG";
 import map from "../assets/map.PNG";
 import detective from "../assets/detective.jpg";
@@ -52,9 +52,20 @@ function GameStory() {
   const [fadeOut, setFadeOut] = useState(false);
   const [text, setText] = useState(false);
   const [exit, setExit] = useState(false);
+  const [fadeIn, setFadeIn] = useState(true); // New state for fade-in
 
   const navigate = useNavigate();
 
+  // Handle fade-in completion
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setFadeIn(false); // Remove fade-in class after animation
+    }, 1000); // Match the CSS animation duration
+
+    return () => clearTimeout(timeout);
+  }, []);
+
+  // Handle navigation after fade-out
   useEffect(() => {
     if (exit) {
       const timeout = setTimeout(() => {
@@ -65,23 +76,25 @@ function GameStory() {
     }
   }, [exit, navigate]);
 
+  // Handle text appearance during fade-out
   useEffect(() => {
     if (fadeOut) {
       const timeout = setTimeout(() => {
         setText(true);
       }, 2000);
 
-      return () => clearTimeout(timeout); // Cleanup in case component unmounts
+      return () => clearTimeout(timeout);
     }
   }, [fadeOut]);
 
+  // Handle exit after fade-out
   useEffect(() => {
     if (fadeOut) {
       const timeout = setTimeout(() => {
         setExit(true);
       }, 10000);
 
-      return () => clearTimeout(timeout); // Cleanup in case component unmounts
+      return () => clearTimeout(timeout);
     }
   }, [fadeOut]);
 
@@ -105,6 +118,11 @@ function GameStory() {
     }
   };
 
+  // Skip to "STARTING GAME" screen
+  const handleSkip = () => {
+    setFadeOut(true);
+  };
+
   useEffect(() => {
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
@@ -112,7 +130,7 @@ function GameStory() {
 
   return (
     <div
-      className={exit ? "fade-leave" : ""}
+      className={`${exit ? "fade-leave" : ""} ${fadeIn ? "fade-in" : ""}`}
       style={{ overflow: "hidden", maxHeight: "84vh" }}
     >
       <main>
@@ -216,6 +234,38 @@ function GameStory() {
             <img src={detective} className="report-img" />
           </>
         )}
+
+        {/* Skip Button */}
+        {!fadeOut && (
+          <button
+            onClick={handleSkip}
+            style={{
+              position: "fixed",
+              bottom: "20%",
+              right: "40px",
+              padding: "10px 20px",
+              fontFamily: "'Press Start 2P', cursive",
+              fontSize: "20px",
+              color: "white",
+              backgroundColor: "rgb(238, 6, 6)",
+              border: "3px dashed rgb(132, 4, 4)",
+              borderRadius: "5px",
+              cursor: "pointer",
+              textShadow: "0px 0px 5px #000",
+              zIndex: 10,
+            }}
+            onMouseEnter = {(e) => {
+             ( e.target.style.border = "3px dashed rgb(238, 6, 6)"),
+             ( e.target.style.backgroundColor = "rgb(132, 4, 4)");
+            }}
+            onMouseLeave={(e) => {
+              (e.target.style.border = "3px dashed rgb(132, 4, 4)"),
+              (e.target.style.backgroundColor = "rgb(238, 6, 6)");
+            }}
+          >
+            SKIP
+          </button>
+        )}
       </main>
 
       {fadeOut && (
@@ -227,7 +277,7 @@ function GameStory() {
                 style={{
                   width: "45%",
                   position: "fixed",
-                  top: "2%",
+                  top: "3%",
                   left: "25%",
                   animation: "spin 5s linear infinite",
                 }}
@@ -236,7 +286,7 @@ function GameStory() {
               <div
                 style={{
                   position: "fixed",
-                  fontFamily: "'Press Start 2P",
+                  fontFamily: "'Press Start 2P'",
                   color: "white",
                   top: "40%",
                   left: "5%",
@@ -253,7 +303,7 @@ function GameStory() {
                 style={{
                   position: "fixed",
                   top: "75%",
-                  fontSize: "30px",
+                  fontSize: " 30px",
                 }}
               >
                 GUESS THE MURDERER AND THE MURDER WEAPON
@@ -267,7 +317,7 @@ function GameStory() {
                   fontSize: "30px",
                 }}
               >
-                THREE LIVES. THREE MINUTES.
+                THREE LIVES. FOUR MINUTES.
               </div>
             </>
           )}
