@@ -15,6 +15,14 @@ const Envelope = ({ text }) => {
         onClick={toggleFlap}
       >
         <div className={styles.envelope}>
+          <div style={{
+            zIndex: 6000,
+            position: "absolute",
+            fontFamily: "'Press Start 2P'",
+            color: "rgb(218, 194, 150)",
+            top: "75%",
+            left: "16%"
+          }}>CLICK TO OPEN OR CLOSE</div>
           <div className={styles.letter}>
             <div style={{textAlign: 'left'}} className={styles.text}>
                 <p style={{

@@ -165,6 +165,24 @@ function GameStory() {
           <p>{dialogues[dialogueIndex]}</p>
         </div>
 
+        {dialogueIndex === 0 && (
+          <p
+            style={{
+              position: "absolute",
+              top: "77%",
+              left: "13vw",
+              fontSize: "18px",
+              fontFamily: "Montserrat",
+              fontWeight: "bold",
+              zIndex: "2000",
+              color: "rgb(210, 210, 212)",
+              textShadow: "2px 0px 3px black"
+            }}
+          >
+            <i>use left and right arrow keys to navigate</i>
+          </p>
+        )}
+
         {dialogueIndex >= 1 && dialogueIndex <= 2 && (
           <img src={intro} className="report-img" />
         )}
@@ -184,7 +202,7 @@ function GameStory() {
 
         {dialogueIndex >= 11 && dialogueIndex <= 12 && (
           <>
-            <div className="story-overlay"/>
+            <div className="story-overlay" />
             <img src={jason} className="suspect-img" />
           </>
         )}
@@ -237,34 +255,36 @@ function GameStory() {
 
         {/* Skip Button */}
         {!fadeOut && (
-          <button
-            onClick={handleSkip}
-            style={{
-              position: "fixed",
-              bottom: "20%",
-              right: "40px",
-              padding: "10px 20px",
-              fontFamily: "'Press Start 2P', cursive",
-              fontSize: "20px",
-              color: "white",
-              backgroundColor: "rgb(238, 6, 6)",
-              border: "3px dashed rgb(132, 4, 4)",
-              borderRadius: "5px",
-              cursor: "pointer",
-              textShadow: "0px 0px 5px #000",
-              zIndex: 10,
-            }}
-            onMouseEnter = {(e) => {
-             ( e.target.style.border = "3px dashed rgb(238, 6, 6)"),
-             ( e.target.style.backgroundColor = "rgb(132, 4, 4)");
-            }}
-            onMouseLeave={(e) => {
-              (e.target.style.border = "3px dashed rgb(132, 4, 4)"),
-              (e.target.style.backgroundColor = "rgb(238, 6, 6)");
-            }}
-          >
-            SKIP
-          </button>
+          <>
+            <button
+              onClick={handleSkip}
+              style={{
+                position: "fixed",
+                bottom: "20%",
+                right: "40px",
+                padding: "10px 20px",
+                fontFamily: "'Press Start 2P', cursive",
+                fontSize: "20px",
+                color: "white",
+                backgroundColor: "rgb(238, 6, 6)",
+                border: "3px dashed rgb(132, 4, 4)",
+                borderRadius: "5px",
+                cursor: "pointer",
+                textShadow: "0px 0px 5px #000",
+                zIndex: 10,
+              }}
+              onMouseEnter={(e) => {
+                (e.target.style.border = "3px dashed rgb(238, 6, 6)"),
+                  (e.target.style.backgroundColor = "rgb(132, 4, 4)");
+              }}
+              onMouseLeave={(e) => {
+                (e.target.style.border = "3px dashed rgb(132, 4, 4)"),
+                  (e.target.style.backgroundColor = "rgb(238, 6, 6)");
+              }}
+            >
+              SKIP
+            </button>
+          </>
         )}
       </main>
 

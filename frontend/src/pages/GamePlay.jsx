@@ -1157,6 +1157,24 @@ function GamePlay() {
                   />
                 </div>
 
+                {dialogueIndex === 0 && (
+          <p
+            style={{
+              position: "absolute",
+              top: "41%",
+              left: "48vw",
+              fontSize: "15px",
+              fontFamily: "Montserrat",
+              fontWeight: "bold",
+              zIndex: "2000",
+              color: "rgb(210, 210, 212)",
+              textShadow: "2px 0px 3px black"
+            }}
+          >
+            <i>use SPACE OR left and right arrow keys to navigate</i>
+          </p>
+        )}
+
                 {currentDialogue[dialogueIndex] ? (
                   <>
                     <p
@@ -1281,6 +1299,24 @@ function GamePlay() {
                     alt="Detective"
                   />
                 </div>
+
+                {dialogueIndex === 0 && (
+          <p
+            style={{
+              position: "absolute",
+              top: "84%",
+              left: "44vw",
+              fontSize: "15px",
+              fontFamily: "Montserrat",
+              fontWeight: "bold",
+              zIndex: "2000",
+              color: "rgb(210, 210, 212)",
+              textShadow: "2px 0px 3px black"
+            }}
+          >
+            <i>use SPACE OR left and right arrow keys to navigate</i>
+          </p>
+        )}
 
                 <p
                   className={
@@ -1548,6 +1584,25 @@ function GamePlay() {
                     </>
                   )}
                 </div>
+
+                {showDialogue && dialogueIndex === 0 && (
+          <p
+            style={{
+              position: "absolute",
+              top: "81%",
+              left: "44vw",
+              fontSize: "15px",
+              fontFamily: "Montserrat",
+              fontWeight: "bold",
+              zIndex: "2000",
+              color: "rgb(210, 210, 212)",
+              textShadow: "2px 0px 3px black"
+            }}
+          >
+            <i>use SPACE OR left and right arrow keys to navigate</i>
+          </p>
+        )}
+
                 <div
                   style={{
                     borderTop: "dashed 2px white",
@@ -1966,8 +2021,56 @@ function GamePlay() {
                   </p>
                 ) : null}
 
+{showDialogue && dialogueIndex === 0 && (
+          <p
+            style={{
+              position: "absolute",
+              top: "78%",
+              left: "44vw",
+              fontSize: "15px",
+              fontFamily: "Montserrat",
+              fontWeight: "bold",
+              zIndex: "2000",
+              color: "rgb(210, 210, 212)",
+              textShadow: "2px 0px 3px black"
+            }}
+          >
+            <i>use SPACE OR left and right arrow keys to navigate</i>
+          </p>
+        )}
+
                 {showDialogue &&
                   dialogueIndex === currentDialogue.length - 1 && (
+                    <>
+                      <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        gap: 0,
+                        position: "absolute",
+                        top: "65%",
+                        zIndex: "1400",
+                        left: "14%",
+                      }}
+                    >
+                      <img
+                        src={down}
+                        style={{ width: "8%" }}
+                        alt="Down Arrow"
+                      />
+                      <div
+                        className="warning"
+                        style={{
+                          margin: 0,
+                          width: "120px",
+                          marginLeft: "-10px",
+                          textShadow: "2px 2px 2px grey",
+                        }}
+                      >
+                        NEXT SUSPECT
+                      </div>
+                    </div>
+
                     <div
                       style={{
                         display: "flex",
@@ -2006,6 +2109,7 @@ function GamePlay() {
                         </div>
                       </button>
                     </div>
+                    </>
                   )}
 
                 {!showDialogue &&
@@ -2017,7 +2121,7 @@ function GamePlay() {
                         position: "absolute",
                         top: "73%",
                         zIndex: "1400",
-                        left: "8%",
+                        left: "13.4%",
                       }}
                     >
                       <img
@@ -2029,8 +2133,9 @@ function GamePlay() {
                         className="warning"
                         style={{
                           margin: 0,
-                          width: "155px",
+                          width: "150px",
                           textShadow: "2px 2px 2px grey",
+                          marginLeft: "-10px"
                         }}
                       >
                         PROCEED TO NEXT STAGE
