@@ -177,42 +177,42 @@ function GameStory() {
 
         {dialogueIndex >= 9 && dialogueIndex <= 10 && (
           <>
-            <div className="overlay" />
+            <div className="story-overlay" />
             <img src={chris} className="suspect-img" />
           </>
         )}
 
         {dialogueIndex >= 11 && dialogueIndex <= 12 && (
           <>
-            <div className="overlay" />
+            <div className="story-overlay"/>
             <img src={jason} className="suspect-img" />
           </>
         )}
 
         {dialogueIndex >= 13 && dialogueIndex <= 14 && (
           <>
-            <div className="overlay" />
+            <div className="story-overlay" />
             <img src={kate} className="suspect-img" />
           </>
         )}
 
         {dialogueIndex >= 15 && dialogueIndex <= 16 && (
           <>
-            <div className="overlay" />
+            <div className="story-overlay" />
             <img src={poppy} className="suspect-img" />
           </>
         )}
 
         {dialogueIndex >= 17 && dialogueIndex <= 18 && (
           <>
-            <div className="overlay" />
+            <div className="story-overlay" />
             <img src={violet} className="suspect-img" />
           </>
         )}
 
         {dialogueIndex >= 19 && dialogueIndex <= 20 && (
           <>
-            <div className="overlay" />
+            <div className="story-overlay" />
             <img src={zehab} className="suspect-img" />
           </>
         )}
