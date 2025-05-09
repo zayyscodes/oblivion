@@ -30,14 +30,23 @@ Oblivion is an interactive murder mystery where your deduction skills are put to
 
 - 🌐 Web-based interface — no installation needed
 - 🧠 Interactive whodunnit experience with deduction-based gameplay
+  
 ![image](https://github.com/user-attachments/assets/36c10317-fac0-4138-b88c-215645368553)
+
 - 📖 Rich storytelling with branching dialogue and evolving narrative
+  
 ![image](https://github.com/user-attachments/assets/e6920ae4-45b0-4847-9118-cb809efb9c28)
+
 - 🤖 AI Detective Assistant to guide you
+  
 ![image](https://github.com/user-attachments/assets/8bddb45a-9e35-480d-b196-c844341753ee)
+
 - 🧩 Clues and limited guesses add suspense and challenge
+  
 ![image](https://github.com/user-attachments/assets/4a60372a-88d0-4b6e-a948-ac06cc4966a2)
+
 -  🕵️ Unlockable hints to guide players through tough spots
+  
 ![image](https://github.com/user-attachments/assets/ed3dde5e-740e-4fca-9cd4-e7974b1d0f98)
 
 
