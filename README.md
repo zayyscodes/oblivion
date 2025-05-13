@@ -53,5 +53,5 @@ Oblivion is an interactive murder mystery where your deduction skills are put to
 
 ## TECH STACK
 - *Front-end*: ReactJS, CSS3
-- *Back-end*: Node.js, Express.js, Flask
+- *Back-end*: Python, Flask
 - *Database*: MongoDB
