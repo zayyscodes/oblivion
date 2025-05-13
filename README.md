@@ -46,8 +46,15 @@ Oblivion is an interactive murder mystery where your deduction skills are put to
 ![image](https://github.com/user-attachments/assets/4a60372a-88d0-4b6e-a948-ac06cc4966a2)
 
 -  🕵️ Unlockable hints to guide players through tough spots
-  
+
+![image](https://github.com/user-attachments/assets/376f4a58-51e4-427c-a01e-a03b3b08b8f5)
+
 ![image](https://github.com/user-attachments/assets/ed3dde5e-740e-4fca-9cd4-e7974b1d0f98)
+
+- Make final deductions in limited tries to bring justice!
+
+![image](https://github.com/user-attachments/assets/4a1846e9-fef4-4bf5-bb09-ac80212578ab)
+
 
 
 
