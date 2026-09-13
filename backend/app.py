@@ -3,16 +3,29 @@ from flask_cors import CORS
 import re
 from pymongo import MongoClient
 from datetime import datetime
+from dotenv import load_dotenv
+import os 
+
+# Load environment variables
+load_dotenv()
+MONGO_URI = os.getenv("MONGO_URI")
 
 app = Flask(__name__)
 
 # Configure MongoDB connection (using local MongoDB instance)
-MONGO_URI = "mongodb+srv://zayyscodes:helloworld4219@aiproject.bxmeloz.mongodb.net/"
 client = MongoClient(MONGO_URI)
 db = client["aiproject"]
 
 # Enable CORS for all routes
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+CORS(app, 
+     origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     allow_headers=["Content-Type"],
+     supports_credentials=True)
+
+
+from interview import interview_bp
+app.register_blueprint(interview_bp, url_prefix='/api')
 
 # Define schema validation for the 'users' collection
 def setup_users_collection():
