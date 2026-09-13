@@ -1,11 +1,10 @@
-from flask import Flask, jsonify, request
-from flask_cors import CORS
+from flask import jsonify, request, Blueprint
 import random
 import uuid
 from data import suspects, weapons, get_suspect_clues, get_weapon_clues
 
-app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
+interview_bp = Blueprint('interview', __name__)
+
 # Map frontend suspect names to backend names
 SUSPECT_NAME_MAPPING = {
     "chris": "Chris Blaine",
@@ -313,7 +312,7 @@ def generate_suspect_dialogues():
     return dialogues
 
 # --- API Endpoints ---
-@app.route('/api/start_game', methods=['POST', 'GET'])
+@interview_bp.route('/start_game', methods=['POST', 'GET'])
 def start_game():
     game_state['killer_name'] = random.choice(list(suspects.keys()))
     game_state['killer_weapon'] = random.choice(list(weapons.values()))
@@ -354,7 +353,7 @@ def start_game():
         'message': 'Game started successfully'
     })
 
-@app.route('/api/round1_interview', methods=['GET'])
+@interview_bp.route('/round1_interview', methods=['GET'])
 def round1_interview():
     if game_state['game_id'] is None:
         return jsonify({
@@ -376,7 +375,7 @@ def round1_interview():
         'suspect_dialogues': suspect_dialogues
     })
 
-@app.route('/api/round2_alibis', methods=['GET'])
+@interview_bp.route('/round2_alibis', methods=['GET'])
 def round2_alibis():
     if game_state['game_id'] is None:
         return jsonify({
@@ -410,7 +409,7 @@ def round2_alibis():
         'alibi_claims': {REVERSE_SUSPECT_MAPPING.get(name.lower(), name): claims for name, claims in game_state['alibi_claims'].items()}
     })
 
-@app.route('/api/round3_get_suggestion', methods=['GET'])
+@interview_bp.route('/round3_get_suggestion', methods=['GET'])
 def round3_get_suggestion():
     if game_state['game_id'] is None:
         return jsonify({
@@ -465,7 +464,7 @@ def round3_get_suggestion():
         'message': f'Suggested suspect: {frontend_name}'
     })
 
-@app.route('/api/round3_verify_alibi', methods=['POST'])
+@interview_bp.route('/round3_verify_alibi', methods=['POST'])
 def round3_verify_alibi():
     if game_state['game_id'] is None:
         return jsonify({
@@ -564,7 +563,7 @@ def round3_verify_alibi():
         'current_probabilities': {REVERSE_SUSPECT_MAPPING.get(name.lower(), name): round(data['probability'], 2) for name, data in suspects.items()}
     })
 
-@app.route('/api/round4_final_deduction', methods=['POST', 'GET'])
+@interview_bp.route('/round4_final_deduction', methods=['POST', 'GET'])
 def round4_final_deduction():
     if game_state['game_id'] is None:
         return jsonify({
@@ -606,7 +605,7 @@ def round4_final_deduction():
         'weapon_clue': weapon_clue
     })
 
-@app.route('/api/make_guess', methods=['POST'])
+@interview_bp.route('/make_guess', methods=['POST'])
 def make_guess():
     try:
         data = request.get_json()
@@ -704,7 +703,7 @@ def make_guess():
             'message': f'Server error: {str(e)}'
         }), 500
     
-@app.route('/api/game_status', methods=['GET'])
+@interview_bp.route('/game_status', methods=['GET'])
 def game_status():
     if game_state['game_id'] is None:
         return jsonify({'status': 'error', 'message': 'No active game.'}), 400
@@ -714,6 +713,3 @@ def game_status():
         'verified_suspects': list(game_state['checked_suspects']),
         'current_probabilities': {REVERSE_SUSPECT_MAPPING.get(name.lower(), name): round(data['probability'], 2) for name, data in suspects.items()}
     })
-
-if __name__ == '__main__':
-    app.run(debug=True)
